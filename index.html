@@ -42,6 +42,9 @@ button{cursor:pointer}
 #stage.lightbox{background:#fff}
 #video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;background:#000}
 #stage.live #video{display:block}
+#cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;background:#000}
+#stage.live.synced #cam{display:block}
+#stage.live.synced #video{opacity:0}
 #overlay{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none;will-change:transform,opacity;max-width:none}
 #hud{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 
@@ -155,6 +158,7 @@ code{font-family:var(--f-mono);font-size:12px;background:rgba(255,255,255,.08);p
 <div id="stage" aria-label="Joonistusala">
   <div id="world">
     <video id="video" playsinline muted autoplay></video>
+    <canvas id="cam"></canvas>
     <canvas id="overlay"></canvas>
     <canvas id="hud"></canvas>
   </div>
@@ -236,6 +240,13 @@ code{font-family:var(--f-mono);font-size:12px;background:rgba(255,255,255,.08);p
       <button class="btn" id="rotBtn">Pööra 90°</button>
     </div>
     <button class="btn" id="fitBtn">Pane pilt uuesti keskele</button>
+    <p class="label">Pildi liikumine paberil</p>
+    <div class="seg" role="radiogroup" aria-label="Pildi liikumine paberil" id="steadySeg">
+      <button role="radio" aria-checked="false" data-steady="fast">Kiire</button>
+      <button role="radio" aria-checked="true" data-steady="normal">Tavaline</button>
+      <button role="radio" aria-checked="false" data-steady="calm">Rahulik</button>
+    </div>
+    <p class="fine">Rahulik summutab värinat kõige rohkem, aga pilt jõuab telefoni liigutamisele veidi hiljem järele. Kiire järgib kohe, aga võbiseb rohkem.</p>
     <p class="label">Abi</p>
     <div class="grid2">
       <button class="btn" id="markersBtn">Märgileht</button>
@@ -1502,8 +1513,9 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
 (() => {
   const $ = s => document.querySelector(s);
   const stage = $('#stage'), video = $('#video'), view = $('#overlay'), hud = $('#hud'), hctx = hud.getContext('2d');
+  const cam = $('#cam'), camCtx = cam.getContext('2d', { alpha:false });
   // opacity: camera view; lightOpacity: lightbox view
-  const st = { mode:'camera', x:0, y:0, scale:1, rot:0, flip:1, opacity:.5, lightOpacity:1, filter:'photo',
+  const st = { mode:'camera', x:0, y:0, scale:1, rot:0, flip:1, opacity:.5, lightOpacity:1, steady:'normal', filter:'photo',
                levels:5, edge:55, grid:false, cells:4, locked:false, peek:false };
   let ui = 'setup', src = null, imgKey = 'sample', stream = null, facing = 'environment', wakeLock = null, anchor = null;
   const inFrame = (() => { try{ return window.self !== window.top; }catch(_){ return true; } })();
@@ -1706,13 +1718,20 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
         let H=Hprev, mode='lost';
         if(mk && mk.src.length){
           mode='markers';
-          if(flowOk && mk.src.length<8){
-            // one marker: blend it with the surface points; two or more: markers alone are exact
+          const Hm = solveH(mk.src,mk.dst);
+          // Blend surface points with the markers so the pose does not jump between sources.
+          // With two or more markers, the markers win outright only when the surface points have drifted.
+          let blend = flowOk;
+          if(blend && Hm && mk.src.length>=8){
+            let e=0; for(let i=0;i<mk.src.length;i++){ const p=apply(flow.H, mk.src[i][0], mk.src[i][1]); e+=Math.hypot(p[0]-mk.dst[i][0], p[1]-mk.dst[i][1]); }
+            blend = e/mk.src.length < 2*s;
+          }
+          if(blend){
             const S=[], D=[];
             tracked.forEach((f,i)=>{ if(flow.mask[i]){ S.push([f.px,f.py]); D.push([f.x*s,f.y*s]); } });
             for(let r=0;r<6;r++) for(let i=0;i<mk.src.length;i++){ S.push(mk.src[i]); D.push(mk.dst[i]); }
-            H = solveH(S,D) || solveH(mk.src,mk.dst) || Hprev;
-          } else H = solveH(mk.src,mk.dst) || Hprev;
+            H = solveH(S,D) || Hm || Hprev;
+          } else H = Hm || Hprev;
         } else if(flowOk){ H=flow.H; mode='flow'; }
         else if(!havePrev) mode='init';   // first frame after pinning: trust the given pose
         if(mode==='lost') feats=tracked;
@@ -1841,6 +1860,32 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
   }
   /* PAPER-END */
 
+  /* STEADY-BEGIN */
+  // Calms the picture without making it trail: a One Euro filter on where four fixed paper points appear.
+  // Tiny, slow changes (sensor noise, autofocus) are smoothed hard; real movement passes through quickly.
+  // Values are in tracking-frame pixels; min = cutoff at rest (Hz), beta = how fast it opens up with speed.
+  const STEADY = { fast:{min:2.5, beta:.08}, normal:{min:1.0, beta:.04}, calm:{min:.35, beta:.02} };
+  function createSteadier(){
+    let state = null, t0 = 0;
+    const alpha = (cut, dt) => 1/(1 + 1/(2*Math.PI*cut*dt));
+    return {
+      reset(){ state = null; },
+      step(H, now, s, p, ref){
+        const meas = ref.map(q => { const v=apply(H,q[0],q[1]); return [v[0]/s, v[1]/s]; });
+        if(!state || meas.some((m,i) => Math.hypot(m[0]-state[i].x, m[1]-state[i].y) > 60)){   // first frame or a big jump: no smoothing
+          state = meas.map(m => ({ x:m[0], y:m[1], dx:0, dy:0 })); t0 = now; return H; }
+        const dt = Math.min(.25, Math.max(.001, (now-t0)/1000)); t0 = now;
+        const ad = alpha(1, dt);
+        meas.forEach((m,i) => { const S = state[i];
+          S.dx += ad*((m[0]-S.x)/dt - S.dx); S.dy += ad*((m[1]-S.y)/dt - S.dy);
+          const a = alpha(p.min + p.beta*Math.hypot(S.dx,S.dy), dt);
+          S.x += a*(m[0]-S.x); S.y += a*(m[1]-S.y); });
+        return solveH(ref, state.map(S => [S.x*s, S.y*s])) || H;
+      }
+    };
+  }
+  /* STEADY-END */
+
   /* ---------- placing the picture on screen ---------- */
   const curOpacity = () => st.mode === 'lightbox' ? st.lightOpacity : st.opacity;
   function videoToScreen(){
@@ -1854,7 +1899,7 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
     return [a,b, W/2+st.x-a*w/2-b*h/2, d,e, H/2+st.y-d*w/2-e*h/2, 0,0,1];
   }
   function applyTransform(){
-    let m = anchor ? mul(videoToScreen(), mul(anchor.H, anchor.A)) : T2d();
+    let m = anchor ? mul(videoToScreen(), mul(anchor.Hd || anchor.H, anchor.A)) : T2d();
     m = m.map(v => v/m[8]);
     view.style.transform = `matrix3d(${m[0]},${m[3]},0,${m[6]},${m[1]},${m[4]},0,${m[7]},0,0,1,0,${m[2]},${m[5]},0,1)`;
     view.style.opacity = st.peek ? 0 : curOpacity();
@@ -1874,7 +1919,7 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
     return n>=2 ? {n,cx,cy,p,d:Math.hypot(a[1].x-a[0].x,a[1].y-a[0].y),a:Math.atan2(a[1].y-a[0].y,a[1].x-a[0].x)} : {n,cx,cy,p}; };
   // When the picture is pinned to the paper, gestures edit it in its own pixel space (A <- A*K),
   // so the part under a finger stays under that finger even when the camera is tilted.
-  const screenToImage = () => inv(mul(videoToScreen(), mul(anchor.H, anchor.A)));
+  const screenToImage = () => inv(mul(videoToScreen(), mul(anchor.Hd || anchor.H, anchor.A)));
   function simFrom(P1,Q1,P2,Q2){
     if(!P2) return [1,0,Q1[0]-P1[0], 0,1,Q1[1]-P1[1], 0,0,1];
     const dx=P2[0]-P1[0], dy=P2[1]-P1[1], ex=Q2[0]-Q1[0], ey=Q2[1]-Q1[1], den=dx*dx+dy*dy;
@@ -2031,7 +2076,8 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
     if(u==='setup') resetZoom();
     pts.clear(); last = null; zpts.clear(); zlast = null; updateChip(); applyTransform();
   }
-  function setAnchor(a){ anchor = a; plane?.reset(); pts.clear(); last = null; applyTransform(); }
+  const steadier = createSteadier();
+  function setAnchor(a){ anchor = a; plane?.reset(); steadier.reset(); if(!a) stage.classList.remove('synced'); pts.clear(); last = null; applyTransform(); }
   function pin(){
     if(st.mode==='camera' && stream && video.videoWidth){
       setAnchor({ A:mul(inv(videoToScreen()), T2d()), H:I3.slice(),
@@ -2088,7 +2134,7 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
   async function wake(){ try{ wakeLock = await navigator.wakeLock?.request('screen'); }catch(_){} }
   document.addEventListener('visibilitychange', () => { if(document.visibilityState==='visible' && (stream || st.mode==='lightbox')) wake(); });
   function stopCamera(){
-    stream?.getTracks().forEach(t=>t.stop()); stream=null; video.srcObject=null; stage.classList.remove('live');
+    stream?.getTracks().forEach(t=>t.stop()); stream=null; video.srcObject=null; stage.classList.remove('live','synced');
     cancelAnimationFrame(trackRaf); trackRaf=0; clearHud();
     if(anchor) unpin();
     updateChip();
@@ -2137,7 +2183,16 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
     const vw=video.videoWidth, vh=video.videoHeight; if(!vw || video.readyState<2) return;
     const dw=Math.min(640,vw), s=vw/dw, dh=Math.round(vh/s);
     if(trk.cv.width!==dw || trk.cv.height!==dh || !trk.ctx){ trk.cv.width=dw; trk.cv.height=dh; trk.ctx=trk.cv.getContext('2d',{willReadFrequently:true}); }
-    trk.ctx.drawImage(video,0,0,dw,dh);
+    // Pinned: show the exact frame the tracking uses, so the camera image and the picture can never drift apart.
+    const synced = !!anchor;
+    let source = video;
+    if(synced){
+      const k = Math.min(1, 3840/Math.max(vw,vh)), cw = Math.round(vw*k), ch = Math.round(vh*k);
+      if(cam.width!==cw || cam.height!==ch){ cam.width=cw; cam.height=ch; }
+      camCtx.drawImage(video, 0, 0, cw, ch); source = cam;
+    }
+    if(stage.classList.contains('synced') !== synced) stage.classList.toggle('synced', synced);
+    trk.ctx.drawImage(source,0,0,dw,dh);
     const frame = trk.ctx.getImageData(0,0,dw,dh), now = performance.now();
     frameNo++;
     // While the surface tracker is doing well, look for markers only every third frame.
@@ -2185,6 +2240,8 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
         if(sheetT && !anchor.paper && frameNo%5===0){ const f = sheetT.find(frame.data, dw, dh); if(f) anchor.paper = f.map(p=>apply(Hi,p[0]*s,p[1]*s)); }
       }
       anchor.lost = now - anchor.lastSeen > 500;
+      if(!anchor.ref){ const Hi = inv(anchor.H); anchor.ref = [[0,0],[vw,0],[vw,vh],[0,vh]].map(p => apply(Hi,p[0],p[1])); }
+      anchor.Hd = steadier.step(anchor.H, now, s, STEADY[st.steady], anchor.ref);
       applyTransform();
     }
     drawHud(); updateChip();
@@ -2222,7 +2279,7 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
   /* ---------- controls ---------- */
   let settingsT = 0;
   const saveSettings = () => { clearTimeout(settingsT); settingsT = setTimeout(() => store.set('settings', {
-    opacity:st.opacity, lightOpacity:st.lightOpacity, filter:st.filter, levels:st.levels, edge:st.edge, grid:st.grid, cells:st.cells }), 400); };
+    opacity:st.opacity, lightOpacity:st.lightOpacity, steady:st.steady, filter:st.filter, levels:st.levels, edge:st.edge, grid:st.grid, cells:st.cells }), 400); };
   function syncOpacity(){ const v=Math.round(curOpacity()*100); $('#opacity').value=v; $('#opacityOut').textContent=v+'%'; applyTransform(); }
   $('#opacity').addEventListener('input', e => { const v=e.target.value/100; if(st.mode==='lightbox') st.lightOpacity=v; else st.opacity=v; syncOpacity(); saveSettings(); });
 
@@ -2236,6 +2293,8 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
   document.querySelectorAll('#filterSeg button').forEach(b => b.onclick = () => { st.filter=b.dataset.filter; syncFilter(); scheduleRender(); saveSettings(); });
   $('#param').addEventListener('input', e => { const v=+e.target.value; if(st.filter==='tones') st.levels=v; else st.edge=v; $('#paramOut').textContent=v; scheduleRender(); saveSettings(); });
 
+  function syncSteady(){ document.querySelectorAll('#steadySeg button').forEach(b => b.setAttribute('aria-checked', b.dataset.steady===st.steady)); }
+  document.querySelectorAll('#steadySeg button').forEach(b => b.onclick = () => { st.steady=b.dataset.steady; syncSteady(); saveSettings(); });
   function syncGrid(){ $('#gridBtn').setAttribute('aria-pressed', st.grid); $('#gridOut').textContent = st.cells+' × '+st.cells; }
   $('#gridBtn').onclick = () => { st.grid=!st.grid; syncGrid(); scheduleRender(); saveSettings(); };
   const setCells = n => { st.cells=Math.max(2,Math.min(16,n)); if(!st.grid) st.grid=true; syncGrid(); scheduleRender(); saveSettings(); };
@@ -2281,7 +2340,9 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
   /* ---------- start ---------- */
   (async function boot(){
     const s = store.get('settings');
-    if(s) for(const k of ['opacity','lightOpacity','filter','levels','edge','grid','cells']) if(k in s) st[k]=s[k];
+    if(s) for(const k of ['opacity','lightOpacity','steady','filter','levels','edge','grid','cells']) if(k in s) st[k]=s[k];
+    if(!STEADY[st.steady]) st.steady='normal';
+    syncSteady();
     syncFilter(); syncGrid();
     const sample = makeSample(); setImage(sample, 'sample', thumbFrom(sample));
     setMode(store.get('mode')==='lightbox' ? 'lightbox' : 'camera', false);
