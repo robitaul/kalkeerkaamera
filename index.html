@@ -129,6 +129,23 @@ body.clean .dock, body.clean .top{display:none}
 .tip{font-size:13px;color:var(--muted)}
 .notice{color:var(--fg)}
 code{font-family:var(--f-mono);font-size:12px;background:rgba(255,255,255,.08);padding:1px 5px;border-radius:4px}
+/* Projects */
+.plist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.prow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px;border:1px solid var(--edge);border-radius:14px;background:rgba(255,255,255,.03);padding:6px}
+.prow.current{border-color:var(--ochre)}
+.pmain{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;align-items:center;text-align:left;background:none;border:0;padding:0;min-width:0;color:var(--fg)}
+.pthumb{width:56px;height:56px;border-radius:10px;background:#000 center/cover no-repeat}
+.ptext{display:grid;gap:3px;min-width:0}
+.ptext b{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ptext small{font-size:12px;color:var(--muted)}
+.ptext small em{font-style:normal;color:var(--ochre);font-weight:600}
+.pmore{width:40px;height:40px;border-radius:10px;border:0;background:none;color:var(--muted);display:grid;place-items:center}
+.pmore svg{width:20px;height:20px}
+.pextra{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;padding:4px 2px 2px}
+.pextra p{margin:0;flex:1 1 100%;font-size:13px;line-height:1.4}
+.pextra input{flex:1 1 180px;min-width:0;min-height:40px;border-radius:10px;border:1px solid var(--ochre);background:rgba(0,0,0,.25);padding:0 10px;font-size:15px;user-select:text;-webkit-user-select:text}
+.btn.danger{background:rgba(232,144,122,.14);border-color:var(--warn);color:var(--warn)}
+.pempty{margin:0;padding:18px 8px;text-align:center;color:var(--muted);font-size:14px;line-height:1.5}
 #drop{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:rgba(23,24,28,.7);font-family:var(--f-display);font-size:22px;pointer-events:none}
 
 /* Printable marker sheet */
@@ -197,9 +214,9 @@ code{font-family:var(--f-mono);font-size:12px;background:rgba(255,255,255,.08);p
     </div>
 
     <div class="actions">
-      <label class="side" for="file" data-states="setup">
-        <span class="ico" id="thumb"></span>Pilt
-      </label>
+      <button class="side" id="projBtn" data-states="setup">
+        <span class="ico" id="thumb"></span>Projektid
+      </button>
       <button class="side" id="restartBtn" data-states="adjust" hidden>
         <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></span>Uuesti
       </button>
@@ -229,7 +246,7 @@ code{font-family:var(--f-mono);font-size:12px;background:rgba(255,255,255,.08);p
     </div>
     <p class="fine" id="modeNote">Valguslaud: pilt on ekraanil heledalt ja paber käib ekraani peale. Kaamerat pole vaja.</p>
     <div class="grid2">
-      <button class="btn" id="newImgBtn">Vali teine pilt</button>
+      <button class="btn" id="projMenuBtn">Projektid</button>
       <button class="btn" id="flipBtn" data-modes="camera">Vaheta kaamerat</button>
     </div>
     <p class="label">Pilt</p>
@@ -257,11 +274,21 @@ code{font-family:var(--f-mono);font-size:12px;background:rgba(255,255,255,.08);p
   </div>
 </div>
 
+<div class="scrim" id="projects" hidden>
+  <div class="menu" role="dialog" aria-modal="true" aria-labelledby="pjTitle">
+    <h2 id="pjTitle">Projektid</h2>
+    <button class="btn primary" id="newProjBtn">+ Uus pilt</button>
+    <ul class="plist" id="plist"></ul>
+    <p class="fine">Iga projekt jätab meelde pildi, vaate seaded ja kus pilt paberil oli. Kõik jääb ainult sinu seadmesse.</p>
+    <button class="btn" id="projectsClose">Sulge</button>
+  </div>
+</div>
+
 <div class="scrim center" id="onboard" hidden>
   <div class="card" role="dialog" aria-modal="true" aria-labelledby="obTitle">
     <h2 id="obTitle">Joonista üle, otse paberile</h2>
     <ol class="steps">
-      <li><span>1</span><div>Vali pilt nupust <b>Pilt</b>.</div></li>
+      <li><span>1</span><div>Vali pilt: <b>Projektid → Uus pilt</b>. Iga pilt on eraldi projekt.</div></li>
       <li><span>2</span><div>Suuna telefon paberile ja säti pilt sõrmedega paika.</div></li>
       <li><span>3</span><div>Vajuta <b>Kinnita</b> ja joonista. Pilt jääb paberi külge ka siis, kui telefon liigub.</div></li>
     </ol>
@@ -1535,7 +1562,9 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
       async get(k){ try{ const db = await open(); return await new Promise((res, rej) => {
         const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); }catch(_){ return null; } },
       async set(k, v){ try{ const db = await open(); await new Promise((res, rej) => {
-        const tx = db.transaction('kv','readwrite'); tx.objectStore('kv').put(v, k); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); }catch(_){} }
+        const tx = db.transaction('kv','readwrite'); tx.objectStore('kv').put(v, k); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); return true; }catch(_){ return false; } },
+      async del(k){ try{ const db = await open(); await new Promise((res, rej) => {
+        const tx = db.transaction('kv','readwrite'); tx.objectStore('kv').delete(k); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); }catch(_){} }
     };
   })();
 
@@ -2021,24 +2050,143 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
     $('#thumb').style.backgroundImage = `url("${thumbUrl}")`;
   }
   const newKey = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
-  function loadBlob(blob, key, isNew){
+  function loadImage(blob){
     return new Promise(res => {
       const url = URL.createObjectURL(blob), img = new Image();
-      img.onload = () => {
-        if(isNew){ restart(); idb.set('image', { key, blob }); }
-        setImage(img, key, url); res(true);
-      };
-      img.onerror = () => { URL.revokeObjectURL(url); if(isNew) toast('Seda pilti ei saanud avada. Proovi JPG- või PNG-faili.'); res(false); };
+      img.onload = () => res(img);
+      img.onerror = () => { URL.revokeObjectURL(url); res(null); };
       img.src = url;
     });
   }
-  $('#file').addEventListener('change', e => { const f=e.target.files[0]; e.target.value=''; if(f) loadBlob(f, newKey(), true); });
-  document.addEventListener('paste', e => { const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/')); if(it) loadBlob(it.getAsFile(), newKey(), true); });
+  // stored as plain bytes: works in every browser's database, including older iPhones
+  const blobBytes = b => b.arrayBuffer ? b.arrayBuffer() : new Promise((res, rej) => { const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>rej(r.error); r.readAsArrayBuffer(b); });
+
+  /* ---------- projects: each picture keeps its own settings and its place on the paper ---------- */
+  const PROJ_KEYS = ['opacity','lightOpacity','filter','levels','edge','grid','cells','flip'];
+  const UNIT = [[0,0],[1,0],[1,1],[0,1]];
+  let projects = [];                                   // [{ id, name, thumb, used }], most recently used first
+  let project = { id:'sample', place:null, sheetPlace:null };
+  let restoreArmed = false, sheetSeen = 0, projT = 0;
+  const projectSettings = () => { const o={}; for(const k of PROJ_KEYS) o[k]=st[k]; return o; };
+  const saveList = () => idb.set('projects', projects);
+  function saveProjectSoon(){
+    clearTimeout(projT);
+    projT = setTimeout(async () => {
+      await idb.set('p:'+project.id, { settings:projectSettings(), place:project.place, sheetPlace:project.sheetPlace });
+      const m = projects.find(p => p.id===project.id);
+      if(m){ m.used = Date.now(); projects.sort((a,b) => b.used-a.used); saveList(); }
+    }, 500);
+  }
+  function syncControls(){ syncOpacity(); syncFilter(); syncGrid(); $('#mirrorBtn').setAttribute('aria-pressed', st.flip<0); }
+  async function openProject(id){
+    const rec = (await idb.get('p:'+id)) || {};
+    let img, thumb;
+    if(id==='sample'){ img = makeSample(); thumb = thumbFrom(img); }
+    else {
+      const b = await idb.get('img:'+id); if(!b) return false;
+      img = await loadImage(new Blob([b.bytes], { type:b.type||'image/jpeg' })); if(!img) return false;
+      thumb = projects.find(p => p.id===id)?.thumb || thumbFrom(img);
+    }
+    unpin();
+    project = { id, place:rec.place||null, sheetPlace:rec.sheetPlace||null };
+    if(rec.settings) for(const k of PROJ_KEYS) if(k in rec.settings) st[k]=rec.settings[k];
+    if(id==='sample' && !rec.settings) st.flip = 1;
+    syncControls(); setImage(img, id, thumb);
+    store.set('current', id);
+    restoreArmed = !!(project.place || project.sheetPlace); sheetSeen = 0;
+    const m = projects.find(p => p.id===id); if(m){ m.used = Date.now(); projects.sort((a,b) => b.used-a.used); saveList(); }
+    return true;
+  }
+  const cleanName = n => (n||'').replace(/\.[a-z0-9]{2,5}$/i,'').replace(/[_-]+/g,' ').trim().slice(0,40);
+  async function newProject(file){
+    const img = await loadImage(file);
+    if(!img){ toast('Seda pilti ei saanud avada. Proovi JPG- või PNG-faili.'); return; }
+    const id = newKey(), thumb = thumbFrom(img), when = new Date();
+    const name = cleanName(file.name) || ('Pilt ' + when.toLocaleDateString('et-EE', { day:'numeric', month:'short' }));
+    let ok = false;
+    try{ ok = await idb.set('img:'+id, { bytes: await blobBytes(file), type:file.type||'image/jpeg' }); }catch(_){}
+    unpin();
+    st.flip = 1;
+    project = { id, place:null, sheetPlace:null }; restoreArmed = false;
+    syncControls(); setImage(img, id, thumb); closeProjects();
+    if(ok){
+      await idb.set('p:'+id, { settings:projectSettings(), place:null, sheetPlace:null });
+      projects.unshift({ id, name, thumb, used:Date.now() }); await saveList(); store.set('current', id);
+      toast('Uus projekt: ' + name);
+    } else toast('Pilti ei saanud seadmesse salvestada, aga saad sellega praegu töötada.');
+  }
+  async function deleteProject(id){
+    projects = projects.filter(p => p.id!==id); await saveList();
+    await idb.del('p:'+id); await idb.del('img:'+id);
+    if(project.id===id){ const next = projects[0]; if(!(next && await openProject(next.id))) await openProject('sample'); }
+    renderProjects();
+  }
+  async function renameProject(id, name){
+    const m = projects.find(p => p.id===id); name = (name||'').trim().slice(0,40);
+    if(m && name){ m.name = name; await saveList(); }
+    renderProjects();
+  }
+  function fmtWhen(t){
+    const d = new Date(t), now = new Date(), time = d.toLocaleTimeString('et-EE', { hour:'2-digit', minute:'2-digit' });
+    return d.toDateString()===now.toDateString() ? 'täna ' + time : d.toLocaleDateString('et-EE', { day:'numeric', month:'short' }) + ' ' + time;
+  }
+  const ICON_MORE = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>';
+  function renderProjects(){
+    const ul = $('#plist'); ul.textContent = '';
+    if(!projects.length){ const p=document.createElement('p'); p.className='pempty'; p.textContent='Sul pole veel projekte. Vajuta „Uus pilt“ ja vali foto, mida tahad joonistada.'; ul.appendChild(p); return; }
+    for(const pr of projects){
+      const li = document.createElement('li'); li.className = 'prow' + (pr.id===project.id ? ' current' : '');
+      const main = document.createElement('button'); main.className = 'pmain';
+      const th = document.createElement('span'); th.className = 'pthumb'; th.style.backgroundImage = `url("${pr.thumb}")`;
+      const tx = document.createElement('span'); tx.className = 'ptext';
+      const b = document.createElement('b'); b.textContent = pr.name;
+      const sm = document.createElement('small'); sm.textContent = 'Viimati ' + fmtWhen(pr.used);
+      if(pr.id===project.id){ const em=document.createElement('em'); em.textContent=' · avatud'; sm.appendChild(em); }
+      tx.append(b, sm); main.append(th, tx);
+      main.onclick = async () => { if(pr.id!==project.id){ const ok = await openProject(pr.id); if(!ok) toast('Projekti ei saanud avada.'); } closeProjects(); };
+      const more = document.createElement('button'); more.className = 'pmore'; more.setAttribute('aria-label', 'Valikud: ' + pr.name); more.innerHTML = ICON_MORE;
+      const extra = document.createElement('div'); extra.className = 'pextra'; extra.hidden = true;
+      const showActions = () => {
+        extra.textContent = '';
+        const rn = document.createElement('button'); rn.className='btn'; rn.textContent='Nimeta ümber';
+        const del = document.createElement('button'); del.className='btn danger'; del.textContent='Kustuta';
+        rn.onclick = () => {
+          extra.textContent = '';
+          const inp = document.createElement('input'); inp.value = pr.name; inp.maxLength = 40; inp.id = 'rename-' + pr.id; inp.setAttribute('aria-label','Projekti nimi');
+          const ok = document.createElement('button'); ok.className='btn primary'; ok.textContent='Salvesta';
+          const go = () => renameProject(pr.id, inp.value);
+          ok.onclick = go; inp.addEventListener('keydown', e => { if(e.key==='Enter') go(); if(e.key==='Escape') renderProjects(); });
+          extra.append(inp, ok); inp.focus(); inp.select();
+        };
+        del.onclick = () => {
+          extra.textContent = '';
+          const q = document.createElement('p'); q.textContent = `Kustutada „${pr.name}“? Pilt ja selle seaded kaovad jäädavalt.`;
+          const yes = document.createElement('button'); yes.className='btn danger'; yes.textContent='Kustuta jäädavalt';
+          const no = document.createElement('button'); no.className='btn'; no.textContent='Tühista';
+          yes.onclick = () => deleteProject(pr.id); no.onclick = showActions;
+          extra.append(q, yes, no);
+        };
+        extra.append(rn, del);
+      };
+      more.onclick = () => { extra.hidden = !extra.hidden; if(!extra.hidden) showActions(); };
+      li.append(main, more, extra); ul.appendChild(li);
+    }
+  }
+  function openProjects(){ renderProjects(); $('#projects').hidden = false; }
+  function closeProjects(){ $('#projects').hidden = true; }
+  $('#projBtn').onclick = openProjects;
+  $('#projMenuBtn').onclick = () => { closeMenu(); openProjects(); };
+  $('#newProjBtn').onclick = () => $('#file').click();
+  $('#projectsClose').onclick = closeProjects;
+  $('#projects').addEventListener('click', e => { if(e.target.id==='projects') closeProjects(); });
+
+  $('#file').addEventListener('change', e => { const f=e.target.files[0]; e.target.value=''; if(f) newProject(f); });
+  document.addEventListener('paste', e => { const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/')); if(it) newProject(it.getAsFile()); });
   let dragDepth = 0;
   document.addEventListener('dragenter', e => { e.preventDefault(); dragDepth++; $('#drop').hidden=false; });
   document.addEventListener('dragleave', () => { if(--dragDepth<=0){ dragDepth=0; $('#drop').hidden=true; } });
   document.addEventListener('dragover', e => e.preventDefault());
-  document.addEventListener('drop', e => { e.preventDefault(); dragDepth=0; $('#drop').hidden=true; const f=e.dataTransfer.files[0]; if(f) loadBlob(f, newKey(), true); });
+  document.addEventListener('drop', e => { e.preventDefault(); dragDepth=0; $('#drop').hidden=true; const f=e.dataTransfer.files[0]; if(f) newProject(f); });
 
   /* ---------- feedback ---------- */
   let toastT = 0;
@@ -2095,8 +2243,8 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
     setUi('draw');
   }
   function unpin(){ if(anchor) setAnchor(null); st.locked = false; setUi('setup'); }
-  function restart(){ unpin(); savedPlace = null; store.del('place'); }
-  $('#mainBtn').onclick = () => { if(ui==='setup') pin(); else { savePlace(); setUi('draw'); } };
+  function restart(){ unpin(); project.place = null; project.sheetPlace = null; restoreArmed = false; saveProjectSoon(); }
+  $('#mainBtn').onclick = () => { if(ui==='setup'){ restoreArmed = false; pin(); } else { savePlace(); setUi('draw'); } };
   $('#editBtn').onclick = () => setUi('adjust');
   $('#restartBtn').onclick = restart;
 
@@ -2111,23 +2259,42 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
   document.addEventListener('keyup', e => { if(e.code==='Space' && e.target===document.body) peek(false); });
 
   /* ---------- remembering where the picture sits on the paper ---------- */
-  // Saved in the markers' own coordinate frame, so it is independent of where the phone was.
-  let savedPlace = store.get('place'), saveTimer = 0;
+  // Two ways, both independent of where the phone was: in the markers' coordinate frame,
+  // and relative to the sheet's own corners (so the same sheet works without markers).
+  let saveTimer = 0;
+  const sideRatio = q => (Math.hypot(q[1][0]-q[0][0],q[1][1]-q[0][1]) + Math.hypot(q[3][0]-q[2][0],q[3][1]-q[2][1]))
+                       / (Math.hypot(q[2][0]-q[1][0],q[2][1]-q[1][1]) + Math.hypot(q[0][0]-q[3][0],q[0][1]-q[3][1]));
   function savePlace(){
-    if(!anchor || !anchor.pts.size) return;
-    savedPlace = { img:imgKey, A:anchor.A, pts:[...anchor.pts] };
-    store.set('place', savedPlace);
+    if(!anchor) return;
+    if(anchor.pts.size) project.place = { A:anchor.A, pts:[...anchor.pts] };
+    if(anchor.paper){
+      const N = solveH(anchor.paper, UNIT);
+      if(N){ const w=view.width, h=view.height;
+        project.sheetPlace = { uv:[[0,0],[w,0],[w,h],[0,h]].map(c => { const p=apply(anchor.A,c[0],c[1]); return apply(N,p[0],p[1]); }), aspect:sideRatio(anchor.paper) }; }
+    }
+    saveProjectSoon();
   }
   const scheduleSave = () => { clearTimeout(saveTimer); saveTimer = setTimeout(savePlace, 1500); };
+  function restored(msg){ restoreArmed = false; setUi('draw'); toast(msg); }
   function tryRestore(raw){
-    if(!savedPlace || savedPlace.img!==imgKey || !raw.size) return;
-    const saved = new Map(savedPlace.pts), S=[], D=[];
-    for(const [id,c] of raw){ const sp=saved.get(id); if(!sp) continue; for(let i=0;i<4;i++){ S.push(sp[i]); D.push(c[i]); } }
-    if(S.length<4) return;
-    const H = solveH(S,D); if(!H) return;
-    setAnchor({ A:savedPlace.A, H, pts:saved, matched:S.length/4, lastSeen:performance.now(), mode:'markers', lost:false });
-    setUi('draw');
-    toast('Pilt on paberil samas kohas kui eelmine kord.');
+    if(!restoreArmed) return;
+    const pl = project.place;
+    if(pl && raw.size){
+      const saved = new Map(pl.pts), S=[], D=[];
+      for(const [id,c] of raw){ const sp=saved.get(id); if(!sp) continue; for(let i=0;i<4;i++){ S.push(sp[i]); D.push(c[i]); } }
+      if(S.length>=4){ const H = solveH(S,D);
+        if(H){ setAnchor({ A:pl.A, H, pts:saved, paper:null, matched:S.length/4, lastSeen:performance.now(), mode:'markers', lost:false });
+          restored('Pilt on paberil samas kohas kui eelmine kord.'); return; } }
+    }
+    const sp = project.sheetPlace;
+    if(sp && trk.sheet && Math.abs(sideRatio(trk.sheet)/sp.aspect - 1) < .2){
+      if(++sheetSeen < 6) return;                 // the whole sheet steadily in view for a moment
+      const N = solveH(trk.sheet, UNIT); if(!N) return;
+      const Ni = inv(N), w=view.width, h=view.height;
+      const A = solveH([[0,0],[w,0],[w,h],[0,h]], sp.uv.map(u => apply(Ni,u[0],u[1]))); if(!A) return;
+      setAnchor({ A, H:I3.slice(), pts:new Map(), paper:trk.sheet.map(p=>p.slice()), matched:0, lastSeen:performance.now(), mode:'init', lost:false, via:'init' });
+      restored('Pilt on lehel samas kohas kui eelmine kord. Kui see ei klapi, vajuta Muuda → Uuesti.');
+    } else sheetSeen = 0;
   }
 
   /* ---------- camera ---------- */
@@ -2237,7 +2404,7 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
         for(const [id,p] of raw) if(!anchor.pts.has(id) && (n>=2 || res.mode==='flow')){ anchor.pts.set(id, p.map(q=>apply(Hi,q[0],q[1]))); learned = true; }
         if(learned) scheduleSave();
         // a sheet that comes fully into view later is learned too
-        if(sheetT && !anchor.paper && frameNo%5===0){ const f = sheetT.find(frame.data, dw, dh); if(f) anchor.paper = f.map(p=>apply(Hi,p[0]*s,p[1]*s)); }
+        if(sheetT && !anchor.paper && frameNo%5===0){ const f = sheetT.find(frame.data, dw, dh); if(f){ anchor.paper = f.map(p=>apply(Hi,p[0]*s,p[1]*s)); scheduleSave(); } }
       }
       anchor.lost = now - anchor.lastSeen > 500;
       if(!anchor.ref){ const Hi = inv(anchor.H); anchor.ref = [[0,0],[vw,0],[vw,vh],[0,vh]].map(p => apply(Hi,p[0],p[1])); }
@@ -2278,8 +2445,8 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
 
   /* ---------- controls ---------- */
   let settingsT = 0;
-  const saveSettings = () => { clearTimeout(settingsT); settingsT = setTimeout(() => store.set('settings', {
-    opacity:st.opacity, lightOpacity:st.lightOpacity, steady:st.steady, filter:st.filter, levels:st.levels, edge:st.edge, grid:st.grid, cells:st.cells }), 400); };
+  // picture settings belong to the open project; how steady the picture moves is a device setting
+  const saveSettings = () => { clearTimeout(settingsT); settingsT = setTimeout(() => store.set('settings', { steady:st.steady }), 400); saveProjectSoon(); };
   function syncOpacity(){ const v=Math.round(curOpacity()*100); $('#opacity').value=v; $('#opacityOut').textContent=v+'%'; applyTransform(); }
   $('#opacity').addEventListener('input', e => { const v=e.target.value/100; if(st.mode==='lightbox') st.lightOpacity=v; else st.opacity=v; syncOpacity(); saveSettings(); });
 
@@ -2300,17 +2467,16 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
   const setCells = n => { st.cells=Math.max(2,Math.min(16,n)); if(!st.grid) st.grid=true; syncGrid(); scheduleRender(); saveSettings(); };
   $('#gridMinus').onclick = () => setCells(st.cells-1); $('#gridPlus').onclick = () => setCells(st.cells+1);
   $('#mirrorBtn').onclick = () => { st.flip*=-1; $('#mirrorBtn').setAttribute('aria-pressed', st.flip<0);
-    if(anchor) adjustAnchor([-1,0,view.width, 0,1,0, 0,0,1]); else applyTransform(); };
+    if(anchor) adjustAnchor([-1,0,view.width, 0,1,0, 0,0,1]); else applyTransform(); saveProjectSoon(); };
   $('#rotBtn').onclick = () => { if(anchor) adjustAnchor(aboutPoint(imgCenter(),1,Math.PI/2)); else { st.rot=Math.round((st.rot+90)/90)*90; applyTransform(); } };
   $('#fitBtn').onclick = () => { closeMenu(); restart(); fit(); };
   $('#flipBtn').onclick = () => { closeMenu(); facing = facing==='environment' ? 'user' : 'environment'; stopCamera(); startCamera(); };
-  $('#newImgBtn').onclick = () => { closeMenu(); $('#file').click(); };
 
   function openMenu(){ $('#menu').hidden=false; }
   function closeMenu(){ $('#menu').hidden=true; }
   $('#moreBtn').onclick = openMenu; $('#menuClose').onclick = closeMenu;
   $('#menu').addEventListener('click', e => { if(e.target.id==='menu') closeMenu(); });
-  document.addEventListener('keydown', e => { if(e.key==='Escape'){ closeMenu(); $('#markerSheet').hidden=true; } });
+  document.addEventListener('keydown', e => { if(e.key==='Escape'){ closeMenu(); closeProjects(); $('#markerSheet').hidden=true; } });
 
   /* ---------- first-run guide ---------- */
   $('#helpBtn').onclick = () => { closeMenu(); $('#onboard').hidden=false; };
@@ -2339,18 +2505,36 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
 
   /* ---------- start ---------- */
   (async function boot(){
-    const s = store.get('settings');
-    if(s) for(const k of ['opacity','lightOpacity','steady','filter','levels','edge','grid','cells']) if(k in s) st[k]=s[k];
+    const s = store.get('settings') || {};
+    // older versions kept the picture settings globally: they become the first project's settings
+    for(const k of PROJ_KEYS) if(k in s) st[k]=s[k];
+    if(s.steady) st.steady = s.steady;
     if(!STEADY[st.steady]) st.steady='normal';
-    syncSteady();
-    syncFilter(); syncGrid();
+    syncSteady(); syncControls();
     const sample = makeSample(); setImage(sample, 'sample', thumbFrom(sample));
     setMode(store.get('mode')==='lightbox' ? 'lightbox' : 'camera', false);
     setUi('setup');
-    const rec = await idb.get('image');
-    if(rec && rec.blob) await loadBlob(rec.blob, rec.key, false);
+    projects = (await idb.get('projects')) || [];
+    if(!projects.length){                         // bring over the single picture an older version remembered
+      const old = await idb.get('image');
+      if(old && old.blob){ try{
+        const img = await loadImage(old.blob);
+        if(img){ const id = old.key || newKey(), oldPlace = store.get('place');
+          await idb.set('img:'+id, { bytes: await blobBytes(old.blob), type: old.blob.type||'image/jpeg' });
+          await idb.set('p:'+id, { settings:projectSettings(), place: oldPlace && oldPlace.img===old.key ? { A:oldPlace.A, pts:oldPlace.pts } : null, sheetPlace:null });
+          projects = [{ id, name:'Minu pilt', thumb:thumbFrom(img), used:Date.now() }]; await saveList();
+          store.set('current', id); await idb.del('image'); store.del('place'); }
+      }catch(_){} }
+    }
+    const cur = store.get('current');
+    if(!(cur && cur!=='sample' && projects.some(p => p.id===cur) && await openProject(cur))){
+      if(!(projects[0] && await openProject(projects[0].id))) await openProject('sample');
+    }
     if(!store.get('onboarded')) $('#onboard').hidden = false;
-    else if(st.mode==='camera') startCamera();
+    else {
+      if(st.mode==='camera') startCamera();
+      if(projects.length >= 2) openProjects();     // choose what to work on
+    }
   })();
 })();
 </script>
