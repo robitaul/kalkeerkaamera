@@ -1,0 +1,2296 @@
+<!doctype html>
+<html lang="et"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Lehevaade"><meta name="theme-color" content="#17181b"><link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAADZUlEQVR4nO3bP24bORjG4c+L3MEGfIQUqbdx46vkWLlKGjept9j7pMj+SRy/sqQhNUPyeUoJkIjhD5wPA8zd/cNjwVv+2HsBHJc4iMRBJA4icRCJg0gcROIgEgeROIjEQSQOInEQiYNIHETiIBIHkTiIxEEkDiJxEImDSBxE4iASB5E4iMRBJA6iD3svYDYvX55v80dPn7/2/osbxTHTJVuH2wqROIjEQdRx5rjZnLGmV5e3x7Dl5CASB5E4iMRB5AlpY/2ewt1+wN8tDo8yj89thUgcROIgEgeROIjEQSQOInEQiYNIHETiIBIHkTiIxLGbv//6tvcS3iGOffwo4+B9iGMHPzdx5D7EcWu/13DYPsTRRdrvSz/flzjaS/PEiQI+fvqz75quIo7G0jwxXBkljrbSaTFiGSWOhq6YJ45cRomjlSsmyoOXUeJoYsoyShzbzVpGiWOjicsocWwxdxkljqtNX0ZV3d0/PO69hvGsUEY5Oa6wSBkljkutU0aJ4yJLlVHiON9qZZQ4zrRgGSWOc6xZRonjXcuWUeI4beUyShwnLF5GiSNRRonjTcr4QRyvKeM/4viFMn4mjv8p4xVx/EMZvxNHlTICcSgjWj0OZZywdBzKOG3dOJTxrkXjUMY5VoxDGWdaLg5lnG+tOJRxkYXiUMalVolDGVdYIg5lXGf+OJRxtcnjUMYWM8ehjI2mjUMZ280ZhzKamDAOZbQyWxzKaGiqOJTR1jxxKKO5SeJQRg8zxKGMToaPQxn9jB2HMroaOA5l9DZqHMq4gQ+dfvfly/OJb58+f93y4wuW0fV6JuOdHAuWsZfB4lDGLQ0Wx6U7rYwtBoujLtlvZWw0Xhx13q4rY7sh46j39l4ZTYwaR+UClNHKwHHUWx0oo6Gx46hfa1BGW8PHUf82oYzmZoijlNHHJHHQgziIxEEkDiJxEImDSBxE4iASB5E4iMRBJA4icRCJg0gcROIgEgdRrxepl3X6jeex7BNHvyvY6X3zNbmtEImDSBxE4iDqNZC+GgxnmuEP4gajt5ODSBxE4iDyhLSxmZ7C3d0/PO69Bg7KbYVIHETiIBIHkTiIxEEkDiJxEImDSBxE4iASB5E4iMRBJA4icRCJg0gcROIgEgeROIjEQSQOInEQiYNIHETiIPoO72/8tyMjnvYAAAAASUVORK5CYII="><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style></head><body>
+<title>Lehevaade</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: the sheet itself fills the screen, straightened and still; a status chip on top, a minimap when zoomed in,
+   and one bottom dock. Same graphite and ochre look as Kalkeerkaamera, so the tools feel like one set. */
+:root{
+  --graphite:#17181b;
+  --raised:#202126;
+  --panel:rgba(23,24,28,.9);
+  --edge:rgba(236,233,226,.14);
+  --fg:#ece9e2;
+  --muted:#a3a097;
+  --ochre:#d9b45e;
+  --ochre-ink:#1c1910;
+  --ochre-soft:rgba(217,180,94,.16);
+  --ok:#8fc57a;
+  --warn:#e8907a;
+  --desk:#101113;
+  --f-display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
+  --f-body:"Figtree",-apple-system,system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --gut-l:max(16px, env(safe-area-inset-left, 0px));
+  --gut-r:max(16px, env(safe-area-inset-right, 0px));
+  color-scheme:dark;
+}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{background:var(--graphite);color:var(--fg);font-family:var(--f-body);font-size:14px;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--ochre);outline-offset:2px}
+@media (prefers-reduced-motion: no-preference){ .toast{animation:pop .18s ease-out} @keyframes pop{from{transform:translateY(-6px);opacity:0}} }
+
+/* Stage: raw camera while looking for the sheet, the straightened sheet once found */
+#stage{position:fixed;inset:0;overflow:hidden;touch-action:none;background:var(--desk)}
+#video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+#gl,#ov{position:absolute;inset:0;width:100%;height:100%}
+#gl{display:none}
+#stage.paper #gl{display:block}
+#stage.paper #video{visibility:hidden}
+#stage.idle #video{visibility:hidden}
+.idlecard{position:absolute;inset:0;display:grid;place-items:center;padding-left:var(--gut-l);padding-right:var(--gut-r);text-align:center;color:var(--muted);font-size:15px;line-height:1.5}
+.idlecard b{display:block;font-family:var(--f-display);font-size:22px;color:var(--fg);margin-bottom:6px}
+
+/* Top */
+.top{position:fixed;top:0;left:0;right:0;z-index:5;pointer-events:none;
+  padding-top:calc(env(safe-area-inset-top,0px) + 10px);padding-bottom:28px;padding-left:var(--gut-l);padding-right:var(--gut-r);
+  background:linear-gradient(to bottom, rgba(18,19,22,.72), rgba(18,19,22,0))}
+.top b{font-family:var(--f-display);font-weight:700;font-size:17px;letter-spacing:-.01em}
+.status{position:fixed;z-index:6;top:calc(env(safe-area-inset-top,0px) + 44px);left:0;right:0;display:flex;justify-content:center;gap:8px;
+  padding-left:var(--gut-l);padding-right:var(--gut-r);pointer-events:none}
+.chip{display:inline-flex;align-items:center;gap:7px;min-width:0;white-space:nowrap;overflow:hidden;
+  font-family:var(--f-mono);font-size:12px;padding:6px 12px;border-radius:999px;background:var(--panel);border:1px solid var(--edge);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.chip span{overflow:hidden;text-overflow:ellipsis}
+.chip::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.chip.ok::before{background:var(--ok)}
+.chip.warn{color:var(--warn)} .chip.warn::before{background:var(--warn)}
+.chip.muted{color:var(--muted)}
+.zoompill{pointer-events:auto;flex:none;font-family:var(--f-mono);font-size:12px;padding:6px 12px;border-radius:999px;
+  background:var(--ochre);color:var(--ochre-ink);border:0;font-variant-numeric:tabular-nums}
+.toast{position:fixed;z-index:8;top:calc(env(safe-area-inset-top,0px) + 84px);left:var(--gut-l);right:var(--gut-r);margin:0 auto;width:fit-content;max-width:440px;
+  background:var(--fg);color:var(--graphite);font-weight:600;font-size:14px;line-height:1.35;text-align:center;padding:10px 14px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.35);pointer-events:none}
+
+/* Dock */
+.dock{position:fixed;z-index:5;left:0;right:0;bottom:0;display:flex;justify-content:center;pointer-events:none}
+.dock-inner{pointer-events:auto;width:100%;max-width:520px;background:var(--panel);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border:1px solid var(--edge);border-bottom:0;border-radius:20px 20px 0 0;
+  padding-top:14px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 12px);padding-left:var(--gut-l);padding-right:var(--gut-r);
+  display:grid;gap:12px}
+.slider{display:grid;grid-template-columns:auto 1fr 40px;align-items:center;gap:12px}
+.slider label{font-size:13px;color:var(--muted)}
+.slider output{font-family:var(--f-mono);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--ochre);height:28px;margin:0}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:rgba(255,255,255,.05);border:1px solid var(--edge);border-radius:11px;padding:3px;gap:3px;min-width:0}
+.seg button{border:0;background:none;border-radius:8px;min-height:34px;padding:0 6px;font-weight:600;font-size:13px;color:var(--muted)}
+.seg button[aria-checked="true"]{background:var(--fg);color:var(--graphite)}
+.actions{display:grid;grid-template-columns:76px 1fr 76px;align-items:center;gap:8px}
+.side{display:grid;justify-items:center;gap:5px;background:none;border:0;padding:0;font-size:12px;font-weight:600;color:var(--fg);min-width:0}
+.side .ico{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.07) center/cover no-repeat;border:1px solid var(--edge)}
+.side .ico svg{width:20px;height:20px}
+.side[aria-pressed="true"] .ico{background-color:var(--ochre);color:var(--ochre-ink);border-color:transparent}
+.peek{min-height:58px;border-radius:999px;border:1px solid var(--edge);background:rgba(255,255,255,.08);color:var(--fg);
+  font-family:var(--f-display);font-weight:700;font-size:17px;display:grid;align-content:center;gap:1px;touch-action:none}
+.peek small{font-family:var(--f-body);font-weight:500;font-size:11px;color:var(--muted)}
+.peek.active{background:var(--fg);color:var(--graphite)} .peek.active small{color:var(--graphite)}
+body.moving .peek{display:none}
+.donebtn{display:none;min-height:58px;border-radius:999px;border:0;background:var(--ochre);color:var(--ochre-ink);font-family:var(--f-display);font-weight:700;font-size:18px}
+body.moving .donebtn{display:block}
+#showUi{position:fixed;z-index:7;right:var(--gut-r);bottom:calc(env(safe-area-inset-bottom,0px) + 16px);
+  min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--edge);background:var(--panel);font-weight:600;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+body.clean .dock, body.clean .top{display:none}
+
+/* Sheets and cards */
+.scrim{position:fixed;inset:0;z-index:20;background:rgba(10,10,12,.55);display:flex;align-items:flex-end;justify-content:center}
+.scrim.center{align-items:center;padding-left:var(--gut-l);padding-right:var(--gut-r)}
+.menu{width:100%;max-width:520px;background:var(--raised);border:1px solid var(--edge);border-bottom:0;border-radius:20px 20px 0 0;
+  padding-top:18px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 14px);padding-left:var(--gut-l);padding-right:var(--gut-r);
+  display:grid;gap:14px;max-height:88vh;overflow-y:auto}
+.menu h2,.card h2{font-family:var(--f-display);font-weight:700;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.menu h2{font-size:19px}
+.label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 -6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{min-height:44px;padding:0 14px;border-radius:11px;border:1px solid var(--edge);background:rgba(255,255,255,.05);font-weight:600;font-size:14px;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+.btn:hover{background:rgba(255,255,255,.09)}
+.btn.primary{background:var(--ochre);color:var(--ochre-ink);border-color:transparent}
+.btn[aria-pressed="true"]{background:var(--ochre-soft);border-color:var(--ochre);color:var(--ochre)}
+.btn.danger{background:rgba(232,144,122,.14);border-color:var(--warn);color:var(--warn)}
+.stepper{display:flex;align-items:center;border:1px solid var(--edge);border-radius:11px;overflow:hidden}
+.stepper button{width:44px;min-height:44px;border:0;background:rgba(255,255,255,.05);font-size:18px}
+.stepper span{flex:1;text-align:center;font-family:var(--f-mono);font-size:12px}
+.fine{font-size:12px;color:var(--muted);margin:0;line-height:1.45}
+.links{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px}
+.links a{color:var(--ochre);text-decoration:none;font-weight:600}
+.card{width:100%;max-width:420px;background:var(--raised);border:1px solid var(--edge);border-radius:18px;padding:22px;display:grid;gap:14px;line-height:1.5;max-height:90vh;overflow-y:auto}
+.card h2{font-size:23px}
+.card p{margin:0}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.steps li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}
+.steps li span{width:26px;height:26px;border-radius:50%;background:var(--ochre);color:var(--ochre-ink);display:grid;place-items:center;font-weight:700;font-size:13px}
+.tip{font-size:13px;color:var(--muted)}
+.sizes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sizes .btn{flex-direction:column;gap:0;min-height:54px;white-space:normal}
+.sizes .btn small{font-weight:500;font-size:11px;color:var(--muted)}
+.sizes .btn.best{border-color:var(--ochre)}
+.custom{display:grid;grid-template-columns:1fr auto 1fr auto;align-items:center;gap:8px}
+.custom input{min-width:0;min-height:44px;border-radius:10px;border:1px solid var(--edge);background:rgba(0,0,0,.25);padding:0 10px;font-size:16px;user-select:text;-webkit-user-select:text}
+#camBox{display:flex;flex-direction:column;gap:12px}
+#camBox[hidden]{display:none}
+.camlist{display:grid;gap:6px}
+.camlist .btn{display:block;width:100%;min-width:0;text-align:left;min-height:42px;line-height:40px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Projects */
+.plist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.prow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px;border:1px solid var(--edge);border-radius:14px;background:rgba(255,255,255,.03);padding:6px}
+.prow.current{border-color:var(--ochre)}
+.pmain{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;align-items:center;text-align:left;background:none;border:0;padding:0;min-width:0;color:var(--fg)}
+.pthumb{width:56px;height:56px;border-radius:10px;background:#000 center/cover no-repeat}
+.ptext{display:grid;gap:3px;min-width:0}
+.ptext b{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ptext small{font-size:12px;color:var(--muted)}
+.ptext small em{font-style:normal;color:var(--ochre);font-weight:600}
+.pmore{width:40px;height:40px;border-radius:10px;border:0;background:none;color:var(--muted);display:grid;place-items:center}
+.pmore svg{width:20px;height:20px}
+.pextra{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;padding:4px 2px 2px}
+.pextra p{margin:0;flex:1 1 100%;font-size:13px;line-height:1.4}
+.pextra input{flex:1 1 180px;min-width:0;min-height:40px;border-radius:10px;border:1px solid var(--ochre);background:rgba(0,0,0,.25);padding:0 10px;font-size:15px;user-select:text;-webkit-user-select:text}
+.pempty{margin:0;padding:18px 8px;text-align:center;color:var(--muted);font-size:14px;line-height:1.5}
+@media (max-width:380px){ .actions{grid-template-columns:66px 1fr 66px} }
+</style>
+
+<div id="stage" aria-label="Paberivaade" class="idle">
+  <video id="video" playsinline muted autoplay></video>
+  <canvas id="gl"></canvas>
+  <canvas id="ov"></canvas>
+  <div class="idlecard" id="idle" hidden><div><b>Kaamera on väljas</b>Vajuta „Alusta“ või vali menüüst kaamera.</div></div>
+</div>
+
+<header class="top"><b>Lehevaade</b></header>
+<div class="status">
+  <div class="chip muted" id="chip" role="status"><span>Kaamera on väljas</span></div>
+  <button class="zoompill" id="zoomBtn" hidden>1×</button>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<section class="dock" aria-label="Juhtnupud">
+  <div class="dock-inner">
+    <div class="slider">
+      <label for="opacity">Läbipaistvus</label>
+      <input type="range" id="opacity" min="0" max="100" value="50">
+      <output id="opacityOut" for="opacity">50%</output>
+    </div>
+    <div class="seg" role="radiogroup" aria-label="Pildi vaade" id="filterSeg">
+      <button role="radio" aria-checked="true" data-filter="photo">Foto</button>
+      <button role="radio" aria-checked="false" data-filter="gray">Mustvalge</button>
+      <button role="radio" aria-checked="false" data-filter="edge">Kontuur</button>
+      <button role="radio" aria-checked="false" data-filter="tones">Toonid</button>
+    </div>
+    <div class="slider" id="paramRow" hidden>
+      <label for="param" id="paramLabel">Toone</label>
+      <input type="range" id="param" min="2" max="8" value="5">
+      <output id="paramOut" for="param">5</output>
+    </div>
+    <div class="actions">
+      <button class="side" id="projBtn"><span class="ico" id="thumb"></span>Projektid</button>
+      <div style="display:grid">
+        <button class="peek" id="peekBtn">Peida pilt<small>hoia all</small></button>
+        <button class="donebtn" id="doneBtn">Valmis</button>
+      </div>
+      <button class="side" id="moreBtn">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></span>Rohkem
+      </button>
+    </div>
+  </div>
+</section>
+
+<button id="showUi" hidden>Näita nuppe</button>
+<input type="file" id="file" accept="image/*" hidden>
+
+<div class="scrim" id="menu" hidden>
+  <div class="menu" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
+    <h2 id="menuTitle">Rohkem</h2>
+    <div class="grid2">
+      <button class="btn primary" id="moveBtn">Liiguta pilti</button>
+      <button class="btn" id="fitBtn">Sobita lehele</button>
+    </div>
+    <p class="label">Paber</p>
+    <div class="grid2">
+      <button class="btn" id="paperBtn">Suurus: ?</button>
+      <button class="btn" id="relockBtn">Otsi leht uuesti</button>
+    </div>
+    <p class="label">Pilt</p>
+    <div class="grid2">
+      <button class="btn" id="mirrorBtn" aria-pressed="false">Peegelda</button>
+      <button class="btn" id="rotBtn">Pööra 90°</button>
+    </div>
+    <p class="label">Ruudustik paberil</p>
+    <div class="grid2">
+      <button class="btn" id="gridBtn" aria-pressed="false">Ruudustik</button>
+      <div class="stepper"><button id="gridMinus" aria-label="Tihedam">−</button><span id="gridOut">5 cm</span><button id="gridPlus" aria-label="Hõredam">+</button></div>
+    </div>
+    <div id="camBox" hidden>
+      <p class="label">Kaamera</p>
+      <div class="camlist" id="camList"></div>
+      <p class="fine">Vali üks kindel tagakaamera. iPhone'i liitkaamera („Dual“, „Triple“) vahetab ise objektiivi.</p>
+    </div>
+    <div class="grid2">
+      <button class="btn" id="projMenuBtn">Projektid</button>
+      <button class="btn" id="helpBtn">Kuidas kasutada</button>
+    </div>
+    <div class="links" id="links"><span class="fine">Teised tööriistad:</span><a href="index.html">Kalkeerkaamera</a><a href="toonikaart.html">Toonikaart</a><a href="kontroll.html">Joonistuse kontroll</a></div>
+    <p class="fine">Pildid ja seaded jäävad ainult sinu seadmesse.</p>
+    <button class="btn" id="menuClose">Sulge</button>
+  </div>
+</div>
+
+<div class="scrim" id="projects" hidden>
+  <div class="menu" role="dialog" aria-modal="true" aria-labelledby="pjTitle">
+    <h2 id="pjTitle">Projektid</h2>
+    <button class="btn primary" id="newProjBtn">+ Uus pilt</button>
+    <ul class="plist" id="plist"></ul>
+    <p class="fine">Samad pildid on ka Kalkeerkaameras. Iga projekt jätab meelde paberi suuruse ja kus pilt paberil on.</p>
+    <button class="btn" id="projectsClose">Sulge</button>
+  </div>
+</div>
+
+<div class="scrim center" id="paperCard" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="ppTitle">
+    <h2 id="ppTitle">Mis suurusega on leht?</h2>
+    <p class="tip" id="ppNote">Kuju järgi on need kõige lähemad. Õige suurus hoiab pildi proportsioonid paberil täpsed.</p>
+    <div class="sizes" id="sizeList"></div>
+    <div class="custom">
+      <input id="cw" inputmode="decimal" placeholder="laius" aria-label="Laius sentimeetrites"><span>×</span>
+      <input id="ch" inputmode="decimal" placeholder="kõrgus" aria-label="Kõrgus sentimeetrites"><span>cm</span>
+    </div>
+    <div class="grid2">
+      <button class="btn" id="ppSkip">Ei tea</button>
+      <button class="btn primary" id="ppCustom">Kasuta neid mõõte</button>
+    </div>
+  </div>
+</div>
+
+<div class="scrim center" id="onboard" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="obTitle">
+    <h2 id="obTitle">Paber ekraanil, sirgelt ja paigal</h2>
+    <ol class="steps">
+      <li><span>1</span><div>Vali pilt: <b>Projektid → Uus pilt</b>.</div></li>
+      <li><span>2</span><div>Hoia telefon nii kaugel, et <b>terve leht</b> on kaadris. Hoia käes või toeta tooli, raamatute või riiuli vastu.</div></li>
+      <li><span>3</span><div>Ekraanil on nüüd paber eestvaates ja pilt selle peal. <b>Suumi kahe sõrmega</b>, et detaile näha: vaade jääb paberi külge.</div></li>
+    </ol>
+    <p class="tip">Pilti saad paberil liigutada: <b>Rohkem → Liiguta pilti</b>. Kui leht läheb kaadrist välja, palub rakendus näidata tervet lehte.</p>
+    <button class="btn primary" id="obGo">Alusta</button>
+  </div>
+</div>
+
+<div class="scrim center" id="notice" hidden>
+  <div class="card" role="alertdialog" aria-modal="true" aria-labelledby="ntTitle">
+    <h2 id="ntTitle">Kaamera ei käivitunud</h2>
+    <p id="noticeText"></p>
+    <button class="btn primary" id="noticeOk">Selge</button>
+  </div>
+</div>
+
+<script>/* js-aruco2 2.0.0 cv.js (MIT) */
+/*
+Copyright (c) 2011 Juan Mellado
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
+/*
+References:
+- "OpenCV: Open Computer Vision Library"
+  http://sourceforge.net/projects/opencvlibrary/
+- "Stack Blur: Fast But Goodlooking"
+  http://incubator.quasimondo.com/processing/fast_blur_deluxe.php
+*/
+
+var CV = CV || {};
+this.CV = CV;
+
+CV.Image = function(width, height, data){
+  this.width = width || 0;
+  this.height = height || 0;
+  this.data = data || [];
+};
+
+CV.grayscale = function(imageSrc, imageDst){
+  var src = imageSrc.data, dst = imageDst.data, len = src.length,
+      i = 0, j = 0;
+
+  for (; i < len; i += 4){
+    dst[j ++] =
+      (src[i] * 0.299 + src[i + 1] * 0.587 + src[i + 2] * 0.114 + 0.5) & 0xff;
+  }
+
+  imageDst.width = imageSrc.width;
+  imageDst.height = imageSrc.height;
+
+  return imageDst;
+};
+
+CV.threshold = function(imageSrc, imageDst, threshold){
+  var src = imageSrc.data, dst = imageDst.data,
+      len = src.length, tab = [], i;
+
+  for (i = 0; i < 256; ++ i){
+    tab[i] = i <= threshold? 0: 255;
+  }
+
+  for (i = 0; i < len; ++ i){
+    dst[i] = tab[ src[i] ];
+  }
+
+  imageDst.width = imageSrc.width;
+  imageDst.height = imageSrc.height;
+
+  return imageDst;
+};
+
+CV.adaptiveThreshold = function(imageSrc, imageDst, kernelSize, threshold){
+  var src = imageSrc.data, dst = imageDst.data, len = src.length, tab = [], i;
+
+  CV.stackBoxBlur(imageSrc, imageDst, kernelSize);
+
+  for (i = 0; i < 768; ++ i){
+    tab[i] = (i - 255 <= -threshold)? 255: 0;
+  }
+
+  for (i = 0; i < len; ++ i){
+    dst[i] = tab[ src[i] - dst[i] + 255 ];
+  }
+
+  imageDst.width = imageSrc.width;
+  imageDst.height = imageSrc.height;
+
+  return imageDst;
+};
+
+CV.otsu = function(imageSrc){
+  var src = imageSrc.data, len = src.length, hist = [],
+      threshold = 0, sum = 0, sumB = 0, wB = 0, wF = 0, max = 0,
+      mu, between, i;
+
+  for (i = 0; i < 256; ++ i){
+    hist[i] = 0;
+  }
+
+  for (i = 0; i < len; ++ i){
+    hist[ src[i] ] ++;
+  }
+
+  for (i = 0; i < 256; ++ i){
+    sum += hist[i] * i;
+  }
+
+  for (i = 0; i < 256; ++ i){
+    wB += hist[i];
+    if (0 !== wB){
+
+      wF = len - wB;
+      if (0 === wF){
+        break;
+      }
+
+      sumB += hist[i] * i;
+
+      mu = (sumB / wB) - ( (sum - sumB) / wF );
+
+      between = wB * wF * mu * mu;
+
+      if (between > max){
+        max = between;
+        threshold = i;
+      }
+    }
+  }
+
+  return threshold;
+};
+
+CV.stackBoxBlurMult =
+  [1, 171, 205, 293, 57, 373, 79, 137, 241, 27, 391, 357, 41, 19, 283, 265];
+
+CV.stackBoxBlurShift =
+  [0, 9, 10, 11, 9, 12, 10, 11, 12, 9, 13, 13, 10, 9, 13, 13];
+
+CV.BlurStack = function(){
+  this.color = 0;
+  this.next = null;
+};
+
+CV.stackBoxBlur = function(imageSrc, imageDst, kernelSize){
+  var src = imageSrc.data, dst = imageDst.data,
+      height = imageSrc.height, width = imageSrc.width,
+      heightMinus1 = height - 1, widthMinus1 = width - 1,
+      size = kernelSize + kernelSize + 1, radius = kernelSize + 1,
+      mult = CV.stackBoxBlurMult[kernelSize],
+      shift = CV.stackBoxBlurShift[kernelSize],
+      stack, stackStart, color, sum, pos, start, p, x, y, i;
+
+  stack = stackStart = new CV.BlurStack();
+  for (i = 1; i < size; ++ i){
+    stack = stack.next = new CV.BlurStack();
+  }
+  stack.next = stackStart;
+
+  pos = 0;
+
+  for (y = 0; y < height; ++ y){
+    start = pos;
+
+    color = src[pos];
+    sum = radius * color;
+
+    stack = stackStart;
+    for (i = 0; i < radius; ++ i){
+      stack.color = color;
+      stack = stack.next;
+    }
+    for (i = 1; i < radius; ++ i){
+      stack.color = src[pos + i];
+      sum += stack.color;
+      stack = stack.next;
+    }
+
+    stack = stackStart;
+    for (x = 0; x < width; ++ x){
+      dst[pos ++] = (sum * mult) >>> shift;
+
+      p = x + radius;
+      p = start + (p < widthMinus1? p: widthMinus1);
+      sum -= stack.color - src[p];
+
+      stack.color = src[p];
+      stack = stack.next;
+    }
+  }
+
+  for (x = 0; x < width; ++ x){
+    pos = x;
+    start = pos + width;
+
+    color = dst[pos];
+    sum = radius * color;
+
+    stack = stackStart;
+    for (i = 0; i < radius; ++ i){
+      stack.color = color;
+      stack = stack.next;
+    }
+    for (i = 1; i < radius; ++ i){
+      stack.color = dst[start];
+      sum += stack.color;
+      stack = stack.next;
+
+      start += width;
+    }
+
+    stack = stackStart;
+    for (y = 0; y < height; ++ y){
+      dst[pos] = (sum * mult) >>> shift;
+
+      p = y + radius;
+      p = x + ( (p < heightMinus1? p: heightMinus1) * width );
+      sum -= stack.color - dst[p];
+
+      stack.color = dst[p];
+      stack = stack.next;
+
+      pos += width;
+    }
+  }
+
+  return imageDst;
+};
+
+CV.gaussianBlur = function(imageSrc, imageDst, imageMean, kernelSize){
+  var kernel = CV.gaussianKernel(kernelSize);
+
+  imageDst.width = imageSrc.width;
+  imageDst.height = imageSrc.height;
+
+  imageMean.width = imageSrc.width;
+  imageMean.height = imageSrc.height;
+
+  CV.gaussianBlurFilter(imageSrc, imageMean, kernel, true);
+  CV.gaussianBlurFilter(imageMean, imageDst, kernel, false);
+
+  return imageDst;
+};
+
+CV.gaussianBlurFilter = function(imageSrc, imageDst, kernel, horizontal){
+  var src = imageSrc.data, dst = imageDst.data,
+      height = imageSrc.height, width = imageSrc.width,
+      pos = 0, limit = kernel.length >> 1,
+      cur, value, i, j, k;
+
+  for (i = 0; i < height; ++ i){
+
+    for (j = 0; j < width; ++ j){
+      value = 0.0;
+
+      for (k = -limit; k <= limit; ++ k){
+
+        if (horizontal){
+          cur = pos + k;
+          if (j + k < 0){
+            cur = pos;
+          }
+          else if (j + k >= width){
+            cur = pos;
+          }
+        }else{
+          cur = pos + (k * width);
+          if (i + k < 0){
+            cur = pos;
+          }
+          else if (i + k >= height){
+            cur = pos;
+          }
+        }
+
+        value += kernel[limit + k] * src[cur];
+      }
+
+      dst[pos ++] = horizontal? value: (value + 0.5) & 0xff;
+    }
+  }
+
+  return imageDst;
+};
+
+CV.gaussianKernel = function(kernelSize){
+  var tab =
+    [ [1],
+      [0.25, 0.5, 0.25],
+      [0.0625, 0.25, 0.375, 0.25, 0.0625],
+      [0.03125, 0.109375, 0.21875, 0.28125, 0.21875, 0.109375, 0.03125] ],
+    kernel = [], center, sigma, scale2X, sum, x, i;
+
+  if ( (kernelSize <= 7) && (kernelSize % 2 === 1) ){
+    kernel = tab[kernelSize >> 1];
+  }else{
+    center = (kernelSize - 1.0) * 0.5;
+    sigma = 0.8 + (0.3 * (center - 1.0) );
+    scale2X = -0.5 / (sigma * sigma);
+    sum = 0.0;
+    for (i = 0; i < kernelSize; ++ i){
+      x = i - center;
+      sum += kernel[i] = Math.exp(scale2X * x * x);
+    }
+    sum = 1 / sum;
+    for (i = 0; i < kernelSize; ++ i){
+      kernel[i] *= sum;
+    }
+  }
+
+  return kernel;
+};
+
+CV.findContours = function(imageSrc, binary){
+  var width = imageSrc.width, height = imageSrc.height, contours = [],
+      src, deltas, pos, pix, nbd, outer, hole, i, j;
+
+  src = CV.binaryBorder(imageSrc, binary);
+
+  deltas = CV.neighborhoodDeltas(width + 2);
+
+  pos = width + 3;
+  nbd = 1;
+
+  for (i = 0; i < height; ++ i, pos += 2){
+
+    for (j = 0; j < width; ++ j, ++ pos){
+      pix = src[pos];
+
+      if (0 !== pix){
+        outer = hole = false;
+
+        if (1 === pix && 0 === src[pos - 1]){
+          outer = true;
+        }
+        else if (pix >= 1 && 0 === src[pos + 1]){
+          hole = true;
+        }
+
+        if (outer || hole){
+          ++ nbd;
+
+          contours.push( CV.borderFollowing(src, pos, nbd, {x: j, y: i}, hole, deltas) );
+        }
+      }
+    }
+  }
+
+  return contours;
+};
+
+CV.borderFollowing = function(src, pos, nbd, point, hole, deltas){
+  var contour = [], pos1, pos3, pos4, s, s_end, s_prev;
+
+  contour.hole = hole;
+
+  s = s_end = hole? 0: 4;
+  do{
+    s = (s - 1) & 7;
+    pos1 = pos + deltas[s];
+    if (src[pos1] !== 0){
+      break;
+    }
+  }while(s !== s_end);
+
+  if (s === s_end){
+    src[pos] = -nbd;
+    contour.push( {x: point.x, y: point.y} );
+
+  }else{
+    pos3 = pos;
+    s_prev = s ^ 4;
+
+    while(true){
+      s_end = s;
+
+      do{
+        pos4 = pos3 + deltas[++ s];
+      }while(src[pos4] === 0);
+
+      s &= 7;
+
+      if ( ( (s - 1) >>> 0) < (s_end >>> 0) ){
+        src[pos3] = -nbd;
+      }
+      else if (src[pos3] === 1){
+        src[pos3] = nbd;
+      }
+
+      contour.push( {x: point.x, y: point.y} );
+
+      s_prev = s;
+
+      point.x += CV.neighborhood[s][0];
+      point.y += CV.neighborhood[s][1];
+
+      if ( (pos4 === pos) && (pos3 === pos1) ){
+        break;
+      }
+
+      pos3 = pos4;
+      s = (s + 4) & 7;
+    }
+  }
+
+  return contour;
+};
+
+CV.neighborhood =
+  [ [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0], [-1, 1], [0, 1], [1, 1] ];
+
+CV.neighborhoodDeltas = function(width){
+  var deltas = [], len = CV.neighborhood.length, i = 0;
+
+  for (; i < len; ++ i){
+    deltas[i] = CV.neighborhood[i][0] + (CV.neighborhood[i][1] * width);
+  }
+
+  return deltas.concat(deltas);
+};
+
+CV.approxPolyDP = function(contour, epsilon){
+  var slice = {start_index: 0, end_index: 0},
+      right_slice = {start_index: 0, end_index: 0},
+      poly = [], stack = [], len = contour.length,
+      pt, start_pt, end_pt, dist, max_dist, le_eps,
+      dx, dy, i, j, k;
+
+  epsilon *= epsilon;
+
+  k = 0;
+
+  for (i = 0; i < 3; ++ i){
+    max_dist = 0;
+
+    k = (k + right_slice.start_index) % len;
+    start_pt = contour[k];
+    if (++ k === len) {k = 0;}
+
+    for (j = 1; j < len; ++ j){
+      pt = contour[k];
+      if (++ k === len) {k = 0;}
+
+      dx = pt.x - start_pt.x;
+      dy = pt.y - start_pt.y;
+      dist = dx * dx + dy * dy;
+
+      if (dist > max_dist){
+        max_dist = dist;
+        right_slice.start_index = j;
+      }
+    }
+  }
+
+  if (max_dist <= epsilon){
+    poly.push( {x: start_pt.x, y: start_pt.y} );
+
+  }else{
+    slice.start_index = k;
+    slice.end_index = (right_slice.start_index += slice.start_index);
+
+    right_slice.start_index -= right_slice.start_index >= len? len: 0;
+    right_slice.end_index = slice.start_index;
+    if (right_slice.end_index < right_slice.start_index){
+      right_slice.end_index += len;
+    }
+
+    stack.push( {start_index: right_slice.start_index, end_index: right_slice.end_index} );
+    stack.push( {start_index: slice.start_index, end_index: slice.end_index} );
+  }
+
+  while(stack.length !== 0){
+    slice = stack.pop();
+
+    end_pt = contour[slice.end_index % len];
+    start_pt = contour[k = slice.start_index % len];
+    if (++ k === len) {k = 0;}
+
+    if (slice.end_index <= slice.start_index + 1){
+      le_eps = true;
+
+    }else{
+      max_dist = 0;
+
+      dx = end_pt.x - start_pt.x;
+      dy = end_pt.y - start_pt.y;
+
+      for (i = slice.start_index + 1; i < slice.end_index; ++ i){
+        pt = contour[k];
+        if (++ k === len) {k = 0;}
+
+        dist = Math.abs( (pt.y - start_pt.y) * dx - (pt.x - start_pt.x) * dy);
+
+        if (dist > max_dist){
+          max_dist = dist;
+          right_slice.start_index = i;
+        }
+      }
+
+      le_eps = max_dist * max_dist <= epsilon * (dx * dx + dy * dy);
+    }
+
+    if (le_eps){
+      poly.push( {x: start_pt.x, y: start_pt.y} );
+
+    }else{
+      right_slice.end_index = slice.end_index;
+      slice.end_index = right_slice.start_index;
+
+      stack.push( {start_index: right_slice.start_index, end_index: right_slice.end_index} );
+      stack.push( {start_index: slice.start_index, end_index: slice.end_index} );
+    }
+  }
+
+  return poly;
+};
+
+CV.warp = function(imageSrc, imageDst, contour, warpSize){
+  var src = imageSrc.data, dst = imageDst.data,
+      width = imageSrc.width, height = imageSrc.height,
+      pos = 0,
+      sx1, sx2, dx1, dx2, sy1, sy2, dy1, dy2, p1, p2, p3, p4,
+      m, r, s, t, u, v, w, x, y, i, j;
+
+  m = CV.getPerspectiveTransform(contour, warpSize - 1);
+
+  r = m[8];
+  s = m[2];
+  t = m[5];
+
+  for (i = 0; i < warpSize; ++ i){
+    r += m[7];
+    s += m[1];
+    t += m[4];
+
+    u = r;
+    v = s;
+    w = t;
+
+    for (j = 0; j < warpSize; ++ j){
+      u += m[6];
+      v += m[0];
+      w += m[3];
+
+      x = v / u;
+      y = w / u;
+
+      sx1 = x >>> 0;
+      sx2 = (sx1 === width - 1)? sx1: sx1 + 1;
+      dx1 = x - sx1;
+      dx2 = 1.0 - dx1;
+
+      sy1 = y >>> 0;
+      sy2 = (sy1 === height - 1)? sy1: sy1 + 1;
+      dy1 = y - sy1;
+      dy2 = 1.0 - dy1;
+
+      p1 = p2 = sy1 * width;
+      p3 = p4 = sy2 * width;
+
+      dst[pos ++] =
+        (dy2 * (dx2 * src[p1 + sx1] + dx1 * src[p2 + sx2]) +
+         dy1 * (dx2 * src[p3 + sx1] + dx1 * src[p4 + sx2]) ) & 0xff;
+
+    }
+  }
+
+  imageDst.width = warpSize;
+  imageDst.height = warpSize;
+
+  return imageDst;
+};
+
+CV.getPerspectiveTransform = function(src, size){
+  var rq = CV.square2quad(src);
+
+  rq[0] /= size;
+  rq[1] /= size;
+  rq[3] /= size;
+  rq[4] /= size;
+  rq[6] /= size;
+  rq[7] /= size;
+
+  return rq;
+};
+
+CV.square2quad = function(src){
+  var sq = [], px, py, dx1, dx2, dy1, dy2, den;
+
+  px = src[0].x - src[1].x + src[2].x - src[3].x;
+  py = src[0].y - src[1].y + src[2].y - src[3].y;
+
+  if (0 === px && 0 === py){
+    sq[0] = src[1].x - src[0].x;
+    sq[1] = src[2].x - src[1].x;
+    sq[2] = src[0].x;
+    sq[3] = src[1].y - src[0].y;
+    sq[4] = src[2].y - src[1].y;
+    sq[5] = src[0].y;
+    sq[6] = 0;
+    sq[7] = 0;
+    sq[8] = 1;
+
+  }else{
+    dx1 = src[1].x - src[2].x;
+    dx2 = src[3].x - src[2].x;
+    dy1 = src[1].y - src[2].y;
+    dy2 = src[3].y - src[2].y;
+    den = dx1 * dy2 - dx2 * dy1;
+
+    sq[6] = (px * dy2 - dx2 * py) / den;
+    sq[7] = (dx1 * py - px * dy1) / den;
+    sq[8] = 1;
+    sq[0] = src[1].x - src[0].x + sq[6] * src[1].x;
+    sq[1] = src[3].x - src[0].x + sq[7] * src[3].x;
+    sq[2] = src[0].x;
+    sq[3] = src[1].y - src[0].y + sq[6] * src[1].y;
+    sq[4] = src[3].y - src[0].y + sq[7] * src[3].y;
+    sq[5] = src[0].y;
+  }
+
+  return sq;
+};
+
+CV.isContourConvex = function(contour){
+  var orientation = 0, convex = true,
+      len = contour.length, i = 0, j = 0,
+      cur_pt, prev_pt, dxdy0, dydx0, dx0, dy0, dx, dy;
+
+  prev_pt = contour[len - 1];
+  cur_pt = contour[0];
+
+  dx0 = cur_pt.x - prev_pt.x;
+  dy0 = cur_pt.y - prev_pt.y;
+
+  for (; i < len; ++ i){
+    if (++ j === len) {j = 0;}
+
+    prev_pt = cur_pt;
+    cur_pt = contour[j];
+
+    dx = cur_pt.x - prev_pt.x;
+    dy = cur_pt.y - prev_pt.y;
+    dxdy0 = dx * dy0;
+    dydx0 = dy * dx0;
+
+    orientation |= dydx0 > dxdy0? 1: (dydx0 < dxdy0? 2: 3);
+
+    if (3 === orientation){
+        convex = false;
+        break;
+    }
+
+    dx0 = dx;
+    dy0 = dy;
+  }
+
+  return convex;
+};
+
+CV.perimeter = function(poly){
+  var len = poly.length, i = 0, j = len - 1,
+      p = 0.0, dx, dy;
+
+  for (; i < len; j = i ++){
+    dx = poly[i].x - poly[j].x;
+    dy = poly[i].y - poly[j].y;
+
+    p += Math.sqrt(dx * dx + dy * dy) ;
+  }
+
+  return p;
+};
+
+CV.minEdgeLength = function(poly){
+  var len = poly.length, i = 0, j = len - 1,
+      min = Infinity, d, dx, dy;
+
+  for (; i < len; j = i ++){
+    dx = poly[i].x - poly[j].x;
+    dy = poly[i].y - poly[j].y;
+
+    d = dx * dx + dy * dy;
+
+    if (d < min){
+      min = d;
+    }
+  }
+
+  return Math.sqrt(min);
+};
+
+CV.countNonZero = function(imageSrc, square){
+  var src = imageSrc.data, height = square.height, width = square.width,
+      pos = square.x + (square.y * imageSrc.width),
+      span = imageSrc.width - width,
+      nz = 0, i, j;
+
+  for (i = 0; i < height; ++ i){
+
+    for (j = 0; j < width; ++ j){
+
+      if ( 0 !== src[pos ++] ){
+        ++ nz;
+      }
+    }
+
+    pos += span;
+  }
+
+  return nz;
+};
+
+CV.binaryBorder = function(imageSrc, dst){
+  var src = imageSrc.data, height = imageSrc.height, width = imageSrc.width,
+      posSrc = 0, posDst = 0, i, j;
+
+  for (j = -2; j < width; ++ j){
+    dst[posDst ++] = 0;
+  }
+
+  for (i = 0; i < height; ++ i){
+    dst[posDst ++] = 0;
+
+    for (j = 0; j < width; ++ j){
+      dst[posDst ++] = (0 === src[posSrc ++]? 0: 1);
+    }
+
+    dst[posDst ++] = 0;
+  }
+
+  for (j = -2; j < width; ++ j){
+    dst[posDst ++] = 0;
+  }
+
+  return dst;
+};
+
+</script>
+<script>
+(() => {
+  function mul(a,b){ const r=new Array(9); for(let i=0;i<3;i++) for(let j=0;j<3;j++) r[i*3+j]=a[i*3]*b[j]+a[i*3+1]*b[3+j]+a[i*3+2]*b[6+j]; return r; }
+  function inv(m){ const [a,b,c,d,e,f,g,h,i]=m; const A=e*i-f*h,B=-(d*i-f*g),C=d*h-e*g, det=a*A+b*B+c*C;
+    return [A/det,-(b*i-c*h)/det,(b*f-c*e)/det, B/det,(a*i-c*g)/det,-(a*f-c*d)/det, C/det,-(a*h-b*g)/det,(a*e-b*d)/det]; }
+  function apply(m,x,y){ const w=m[6]*x+m[7]*y+m[8]; return [(m[0]*x+m[1]*y+m[2])/w,(m[3]*x+m[4]*y+m[5])/w]; }
+  // Least-squares homography (normalized DLT) mapping src points to dst points
+  function solveH(src,dst){
+    const n=src.length; if(n<4) return null;
+    const norm = pts => { let cx=0,cy=0; for(const p of pts){cx+=p[0];cy+=p[1];} cx/=n; cy/=n;
+      let d=0; for(const p of pts) d+=Math.hypot(p[0]-cx,p[1]-cy); d/=n; const s=d>0?Math.SQRT2/d:1;
+      return {T:[s,0,-s*cx, 0,s,-s*cy, 0,0,1], p:pts.map(q=>[(q[0]-cx)*s,(q[1]-cy)*s])}; };
+    const A=norm(src), B=norm(dst), M=Array.from({length:8},()=>new Float64Array(9));
+    for(let k=0;k<n;k++){ const [x,y]=A.p[k], [u,v]=B.p[k];
+      for(const r of [[x,y,1,0,0,0,-u*x,-u*y,u],[0,0,0,x,y,1,-v*x,-v*y,v]])
+        for(let i=0;i<8;i++){ for(let j=0;j<8;j++) M[i][j]+=r[i]*r[j]; M[i][8]+=r[i]*r[8]; } }
+    for(let c=0;c<8;c++){ let pv=c; for(let r=c+1;r<8;r++) if(Math.abs(M[r][c])>Math.abs(M[pv][c])) pv=r;
+      if(Math.abs(M[pv][c])<1e-12) return null; [M[c],M[pv]]=[M[pv],M[c]];
+      for(let r=0;r<8;r++){ if(r===c) continue; const f=M[r][c]/M[c][c]; for(let j=c;j<9;j++) M[r][j]-=f*M[c][j]; } }
+    const h=[]; for(let i=0;i<8;i++) h.push(M[i][8]/M[i][i]); h.push(1);
+    const H=mul(inv(B.T), mul(h, A.T));
+    return H.every(Number.isFinite) ? H : null;
+  }
+
+
+  /* PAPER-BEGIN */
+  // Finds and follows the drawing sheet itself: a light four-sided shape on a darker surface.
+  // find(): coarse search for a whole sheet in view. follow(): fits a line to each edge near
+  // where the sheet is expected, so a hand over a corner or along an edge does not break it.
+  function createPaperTracker(){
+    // learned at the last whole-sheet find: how dark the desk is next to the sheet, and how light the sheet is
+    let gray=null, bin=null, buf=null, ratioMax=.85, paperLum=0, sideRatioMax=null, sideLum=null;
+    const area = q => { let a=0; for(let i=0;i<q.length;i++){ const p=q[i], r=q[(i+1)%q.length]; a+=p[0]*r[1]-r[0]*p[1]; } return a/2; };
+    function order(q){
+      const cx=q.reduce((s,p)=>s+p[0],0)/4, cy=q.reduce((s,p)=>s+p[1],0)/4;
+      const o=q.slice().sort((a,b)=>Math.atan2(a[1]-cy,a[0]-cx)-Math.atan2(b[1]-cy,b[0]-cx));
+      let k=0; for(let i=1;i<4;i++) if(o[i][0]+o[i][1] < o[k][0]+o[k][1]) k=i;
+      return o.slice(k).concat(o.slice(0,k));
+    }
+    function lum(d,w,x,y){
+      const x0=x|0, y0=y|0, fx=x-x0, fy=y-y0, i=(y0*w+x0)*4, j=i+w*4;
+      const L=k=>.299*d[k]+.587*d[k+1]+.114*d[k+2];
+      return (L(i)*(1-fx)+L(i+4)*fx)*(1-fy)+(L(j)*(1-fx)+L(j+4)*fx)*fy;
+    }
+    function fitLine(pts){
+      for(let pass=0; pass<2; pass++){
+        const n=pts.length; if(n<6) return null;
+        let mx=0,my=0; for(const p of pts){ mx+=p[0]; my+=p[1]; } mx/=n; my/=n;
+        let sxx=0,sxy=0,syy=0; for(const p of pts){ const x=p[0]-mx, y=p[1]-my; sxx+=x*x; sxy+=x*y; syy+=y*y; }
+        const ang=.5*Math.atan2(2*sxy, sxx-syy), ux=Math.cos(ang), uy=Math.sin(ang);
+        if(pass===1) return {mx,my,ux,uy};
+        const res=pts.map(p=>Math.abs((p[0]-mx)*uy-(p[1]-my)*ux)), med=res.slice().sort((a,b)=>a-b)[n>>1];
+        const lim=Math.max(1.2, 2.5*med); pts=pts.filter((p,i)=>res[i]<=lim);
+      }
+    }
+    function meet(a,b){
+      const den=a.ux*b.uy-a.uy*b.ux; if(Math.abs(den)<.15) return null;
+      const t=((b.mx-a.mx)*b.uy-(b.my-a.my)*b.ux)/den;
+      return [a.mx+a.ux*t, a.my+a.uy*t];
+    }
+    // Edge points along one side, searched across a band around where the side is expected.
+    function sideSamples(d,w,h,a,b,cx,cy,band,t0,t1,N,learn){
+      const dx=b[0]-a[0], dy=b[1]-a[1], len=Math.hypot(dx,dy);
+      let nx=-dy/len, ny=dx/len;
+      if(((a[0]+b[0])/2-cx)*nx+((a[1]+b[1])/2-cy)*ny<0){ nx=-nx; ny=-ny; }
+      const pts=[], L=new Float32Array(2*band+3);
+      for(let s=0;s<=N;s++){
+        const t=t0+(t1-t0)*s/N, px=a[0]+dx*t, py=a[1]+dy*t;
+        let inside=true;
+        for(let k=-band-1, j=0; k<=band+1; k++, j++){ const x=px+nx*k, y=py+ny*k;
+          if(x<1||y<1||x>=w-2||y>=h-2){ inside=false; break; } L[j]=lum(d,w,x,y); }
+        if(!inside) continue;
+        const G=j=>L[j-1]-L[j+1];          // light inside -> dark outside
+        let bj=0, bg=0; for(let j=1;j<L.length-1;j++){ const g=G(j); if(g>bg){ bg=g; bj=j; } }
+        const lin=L[Math.max(0,bj-3)], lout=L[Math.min(L.length-1,bj+3)], ratio=lout/Math.max(1,lin);
+        if(bg<Math.max(8,.1*lin)) continue;
+        if(!learn && ratio>.92) continue;
+        const gm=bj>1?G(bj-1):bg, gp=bj<L.length-2?G(bj+1):bg, den=gm-2*bg+gp;
+        const off=Math.abs(den)>1e-6 ? Math.max(-1,Math.min(1,.5*(gm-gp)/den)) : 0;
+        const k=bj-band-1+off; pts.push([px+nx*k, py+ny*k, lin, ratio]);
+      }
+      return { pts, dx, dy, len, nx, ny };
+    }
+    // The sides are checked against each other: inside every true edge is paper, and its brightness has
+    // changed by the same factor since the lock (camera exposure). The board's edge, a few cm further out,
+    // is far darker inside, so a side that has slipped onto it is dropped instead of followed.
+    function crossCheck(sides){
+      const f=sides.map((S,i)=>{ if(!S || S.pts.length<6) return NaN; const ls=S.pts.map(p=>p[2]).sort((x,y)=>x-y), typ=ls[Math.floor(ls.length*.7)];
+        return typ/((sideLum && sideLum[i]) || 1); });
+      const ok=f.filter(Number.isFinite); if(ok.length<2) return;
+      const m=ok.slice().sort((x,y)=>x-y)[ok.length>>1], lim=sideLum ? .75 : .6;
+      sides.forEach((S,i)=>{ if(S && Number.isFinite(f[i]) && f[i] < lim*m) S.pts=[]; });
+    }
+    function follow(d,w,h,q,band,learn){
+      const cx=(q[0][0]+q[1][0]+q[2][0]+q[3][0])/4, cy=(q[0][1]+q[1][1]+q[2][1]+q[3][1])/4, lines=[], ratios=[], lums=[], side=[], per=[];
+      for(let i=0;i<4;i++){
+        const a=q[i], b=q[(i+1)%4], len=Math.hypot(b[0]-a[0], b[1]-a[1]);
+        if(len<30) return null;
+        const N=Math.max(12, Math.min(70, len/5|0)), S=sideSamples(d,w,h,a,b,cx,cy,band,.05,.95,N,learn); S.N=N; per.push(S);
+      }
+      if(!learn) crossCheck(per);
+      for(let i=0;i<4;i++){
+        const S=per[i], pts=S.pts;
+        if(learn){ for(const p of pts){ ratios.push(p[3]); lums.push(p[2]); } side.push({ r:pts.map(p=>p[3]), l:pts.map(p=>p[2]) }); for(const p of pts) p.length=2; }
+        else brightnessCheck(pts, i);
+        let ln = pts.length >= Math.max(6, S.N*.25) ? fitLine(pts) : null;
+        if(ln){ const ang=Math.abs(ln.ux*S.dy/S.len - ln.uy*S.dx/S.len); if(ang>.12) ln=null; }   // must stay near the expected direction
+        if(!ln) return null;
+        lines.push(ln);
+      }
+      const out=[]; for(let i=0;i<4;i++){ const c=meet(lines[(i+3)%4], lines[i]); if(!c) return null; out.push(c); }
+      // sanity: stays convex, near the prediction, and about the same size
+      const a0=area(q), a1=area(out);
+      if(Math.sign(a0)!==Math.sign(a1) || Math.abs(a1/a0)<.6 || Math.abs(a1/a0)>1.6) return null;
+      for(let i=0;i<4;i++) if(Math.hypot(out[i][0]-q[i][0], out[i][1]-q[i][1]) > 3*band+6) return null;
+      for(let i=0;i<4;i++){ const p=out[i], r=out[(i+1)%4], s=out[(i+2)%4];
+        const cr=(r[0]-p[0])*(s[1]-r[1])-(r[1]-p[1])*(s[0]-r[0]); if(Math.sign(cr)!==Math.sign(a1)) return null; }
+      if(learn){
+        // How sheet-like the outline is: a real sheet is equally light just inside all four edges,
+        // and clearly darker just outside them. A sheet merged with part of the board is not.
+        const med=a=>a.length ? a.slice().sort((x,y)=>x-y)[a.length>>1] : NaN;
+        const ins=side.map(o=>med(o.l)), outs=side.map(o=>med(o.r));
+        out.stats = { consistency: Math.min(...ins)/Math.max(...ins), worstRatio: Math.max(...outs), ratioMed: med(ratios), lumMed: med(lums), ins, outs };
+      }
+      return out;
+    }
+    // The phone keeps changing its exposure, so paper brightness is judged within the current frame:
+    // points clearly darker than the typical edge point of this side (a hand, a shadow) are dropped.
+    // Judged within this frame (exposure and contrast change all the time): an edge point must be about as
+    // light inside as the typical point of this edge (a hand is darker), and drop about as much (paper onto
+    // the board, not paper onto a hand).
+    function brightnessCheck(pts, i){
+      if(pts.length<6){ for(const p of pts) p.length=2; return; }
+      const ls=pts.map(p=>p[2]).sort((x,y)=>x-y), typical=ls[Math.floor(ls.length*.7)];
+      const rs=pts.map(p=>p[3]).sort((x,y)=>x-y), rmed=rs[rs.length>>1];
+      for(let j=pts.length-1;j>=0;j--) if(pts[j][2] < .72*typical || pts[j][3] > rmed+.15) pts.splice(j,1);
+      for(const p of pts) p.length=2;
+    }
+    // Each edge on its own, using only the part inside the view: for when the sheet is partly out of view.
+    function followSides(d,w,h,q,band){
+      const cx=(q[0][0]+q[1][0]+q[2][0]+q[3][0])/4, cy=(q[0][1]+q[1][1]+q[2][1]+q[3][1])/4, m=band+3, per=[];
+      for(let i=0;i<4;i++){
+        const a=q[i], b=q[(i+1)%4], dx=b[0]-a[0], dy=b[1]-a[1], len=Math.hypot(dx,dy);
+        if(len<30){ per.push(null); continue; }
+        // the part of this edge inside the view (Liang-Barsky clipping)
+        let t0=0, t1=1;
+        for(const [p,qq] of [[-dx,a[0]-m],[dx,w-m-a[0]],[-dy,a[1]-m],[dy,h-m-a[1]]]){
+          if(Math.abs(p)<1e-9){ if(qq<0){ t0=1; t1=0; } continue; }
+          const r=qq/p; if(p<0) t0=Math.max(t0,r); else t1=Math.min(t1,r); }
+        t0=Math.max(t0,.03); t1=Math.min(t1,.97);
+        if(t1-t0 < 40/len){ per.push(null); continue; }
+        const N=Math.max(8, Math.min(70, (t1-t0)*len/5|0)), S=sideSamples(d,w,h,a,b,cx,cy,band,t0,t1,N,false);
+        S.N=N; S.t0=t0; S.t1=t1; S.a=a; per.push(S);
+      }
+      crossCheck(per);
+      return per.map((S,i)=>{
+        if(!S) return null;
+        const pts=S.pts; brightnessCheck(pts, i);
+        let ln = pts.length >= Math.max(6, .45*(S.N+1)) ? fitLine(pts) : null;
+        if(ln){ const ang=Math.abs(ln.ux*S.dy/S.len - ln.uy*S.dx/S.len); if(ang>.12) ln=null; }
+        if(ln){ const off=Math.abs((ln.mx-S.a[0])*S.nx+(ln.my-S.a[1])*S.ny); if(off>band) ln=null; }
+        return ln ? { ln, t0:S.t0, t1:S.t1 } : null;
+      });
+    }
+    // Getting back on the paper with only part of the sheet in view: find a corner of the sheet, i.e.
+    // two long straight edges of a light region meeting inside the view (edges along the view's border don't count).
+    function findCorner(d,w,h){
+      const { k, gw, gh, N } = prepare(d,w,h);
+      lab.fill(0);
+      const seeds=[];
+      for(const [fx,fy] of [[.5,.5],[.3,.3],[.7,.3],[.3,.7],[.7,.7],[.5,.25],[.5,.75],[.25,.5],[.75,.5]]){
+        const x0=(fx*gw)|0, y0=(fy*gh)|0; let bi=y0*gw+x0, bv=-1;
+        for(let y=Math.max(0,y0-8);y<=Math.min(gh-1,y0+8);y++) for(let x=Math.max(0,x0-8);x<=Math.min(gw-1,x0+8);x++){ const v=sm[y*gw+x]; if(v>bv){ bv=v; bi=y*gw+x; } }
+        seeds.push(bi); }
+      let id=0; const found=[];
+      for(const seed of seeds){
+        if(lab[seed]) continue;
+        const n=grow(seed, gw, gh, ++id);
+        if(n<.08*N || n>.97*N) continue;
+        if(cleanRegion(id, gw, gh) < .06*N) continue;
+        for(const c of CV.findContours(bin, buf)){
+          if(c.hole || c.length<80) continue;
+          let rest=[]; for(let i=0;i<c.length;i+=2){ const p=c[i]; if(p.x>3 && p.y>3 && p.x<gw-4 && p.y<gh-4) rest.push([p.x,p.y]); }
+          const lines=[];
+          for(let li=0; li<3 && rest.length>=25; li++){
+            let bl=null, bn=0;
+            for(let it=0; it<140; it++){
+              const p=rest[(Math.random()*rest.length)|0], q=rest[(Math.random()*rest.length)|0];
+              const dx=q[0]-p[0], dy=q[1]-p[1], len=Math.hypot(dx,dy); if(len<15) continue;
+              const nx=-dy/len, ny=dx/len; let n2=0; for(const r of rest) if(Math.abs((r[0]-p[0])*nx+(r[1]-p[1])*ny)<1.6) n2++;
+              if(n2>bn){ bn=n2; bl=[p,nx,ny]; } }
+            if(!bl || bn<25) break;
+            const [p,nx,ny]=bl, inl=[], keep=[];
+            for(const r of rest){ const dd=Math.abs((r[0]-p[0])*nx+(r[1]-p[1])*ny); if(dd<1.6) inl.push(r); if(dd>=3) keep.push(r); }
+            const ln=fitLine(inl); if(!ln) break; ln.pts=inl; lines.push(ln); rest=keep;
+          }
+          for(let a=0;a<lines.length;a++) for(let b=a+1;b<lines.length;b++){
+            const A=lines[a], B=lines[b], cr=A.ux*B.uy-A.uy*B.ux; if(Math.abs(cr)<.5) continue;          // roughly square corner
+            const m=meet(A,B); if(!m || m[0]<4 || m[1]<4 || m[0]>gw-5 || m[1]>gh-5) continue;
+            // both edges must actually start at the corner: their points lie on one side of it
+            const dirOf=L=>{ let sp=0; for(const r of L.pts) sp+=(r[0]-m[0])*L.ux+(r[1]-m[1])*L.uy; const sg=sp>=0?1:-1;
+              let near=1e9; for(const r of L.pts) near=Math.min(near, Math.hypot(r[0]-m[0], r[1]-m[1])); return { u:[L.ux*sg, L.uy*sg], near, n:L.pts.length }; };
+            const da=dirOf(A), db=dirOf(B);
+            if(da.near>6 || db.near>6) continue;
+            const score=da.n+db.n, pt=[m[0]*k+(k-1)/2, m[1]*k+(k-1)/2];
+            if(!found.some(f=>Math.hypot(f.pt[0]-pt[0], f.pt[1]-pt[1])<20)) found.push({ score, pt, dirs:[da.u, db.u] });
+          }
+        }
+      }
+      found.sort((a,b)=>b.score-a.score);
+      return found.length ? found : null;
+    }
+    function learnFrom(stats){
+      if(!stats || !Number.isFinite(stats.ratioMed)) return;
+      ratioMax=Math.min(.85, stats.ratioMed+.2); paperLum=stats.lumMed;
+      const okSides = stats.ins.every(Number.isFinite) && stats.outs.every(Number.isFinite);
+      sideLum = okSides ? stats.ins.slice() : null;
+      sideRatioMax = okSides ? stats.outs.map(r => Math.min(.85, r+.2)) : null;
+    }
+    // Coarse sheet outline from the contour's straight middles: tape or clips on the corners
+    // bulge the outline there, so each side is fitted only from its middle part and the corners
+    // come from where those lines cross.
+    function sidesFromContour(c, poly){
+      const lines=[];
+      for(let i=0;i<4;i++){
+        const a=poly[i], b=poly[(i+1)%4], dx=b.x-a.x, dy=b.y-a.y, L2=dx*dx+dy*dy, len=Math.sqrt(L2);
+        if(len<8) return null;
+        const pts=[];
+        for(const p of c){ const t=((p.x-a.x)*dx+(p.y-a.y)*dy)/L2; if(t<.18||t>.82) continue;
+          if(Math.abs((p.x-a.x)*dy-(p.y-a.y)*dx)/len < Math.max(3, .06*len)) pts.push([p.x,p.y]); }
+        const ln=fitLine(pts); if(!ln) return null; lines.push(ln);
+      }
+      const out=[]; for(let i=0;i<4;i++){ const m=meet(lines[(i+3)%4], lines[i]); if(!m) return null; out.push(m); }
+      return out;
+    }
+    // Region growing: spread from a light spot while brightness changes only gradually.
+    // Uneven light across the sheet changes slowly; the sheet's edge is a sudden drop.
+    let sm=null, tmp=null, lab=null, qbuf=null, mk=null, mk2=null, integ=null;
+    function grow(seed, gw, gh, id){
+      const L0=sm[seed], floor=.55*L0, tol=Math.max(4, .045*L0); let head=0, tail=0, n=0;
+      lab[seed]=id; qbuf[tail++]=seed;
+      while(head<tail){
+        const p=qbuf[head++], x=p%gw, v=sm[p]; n++;
+        const tryN=q=>{ if(lab[q]) return; const u=sm[q]; if(u<floor || Math.abs(u-v)>tol) return; lab[q]=id; qbuf[tail++]=q; };
+        if(x>0) tryN(p-1); if(x<gw-1) tryN(p+1); if(p>=gw) tryN(p-gw); if(p<gw*(gh-1)) tryN(p+gw);
+      }
+      return n;
+    }
+    // The four longest straight stretches of an outline are the sheet's edges. A leak through tape,
+    // a hand over a corner or a clip only adds short stretches, so they are left out.
+    function quadFromLines(c, gw, gh){
+      let rest=[]; for(let i=0;i<c.length;i+=2) rest.push([c[i].x, c[i].y]);
+      const total=rest.length, lines=[];
+      for(let k=0;k<4;k++){
+        if(rest.length<20) return null;
+        let best=null, bestN=0;
+        for(let it=0; it<160; it++){
+          const p=rest[(Math.random()*rest.length)|0], q=rest[(Math.random()*rest.length)|0];
+          const dx=q[0]-p[0], dy=q[1]-p[1], len=Math.hypot(dx,dy); if(len<15) continue;
+          const nx=-dy/len, ny=dx/len; let n=0;
+          for(const r of rest) if(Math.abs((r[0]-p[0])*nx+(r[1]-p[1])*ny)<1.6) n++;
+          if(n>bestN){ bestN=n; best=[p,nx,ny]; }
+        }
+        if(!best || bestN<.06*total) return null;
+        const [p,nx,ny]=best, inl=[], keep=[];
+        for(const r of rest){ const dd=Math.abs((r[0]-p[0])*nx+(r[1]-p[1])*ny); if(dd<1.6) inl.push(r); if(dd>=3) keep.push(r); }
+        const ln=fitLine(inl); if(!ln) return null;
+        let mx=0,my=0; for(const r of inl){ mx+=r[0]; my+=r[1]; } ln.cx=mx/inl.length; ln.cy=my/inl.length;
+        lines.push(ln); rest=keep;
+      }
+      // order the edges around the middle, then corners are where neighbours meet
+      const cx=lines.reduce((s,l)=>s+l.cx,0)/4, cy=lines.reduce((s,l)=>s+l.cy,0)/4;
+      lines.sort((a,b)=>Math.atan2(a.cy-cy,a.cx-cx)-Math.atan2(b.cy-cy,b.cx-cx));
+      const out=[]; for(let i=0;i<4;i++){ const m=meet(lines[i], lines[(i+1)%4]); if(!m) return null; out.push(m); }
+      for(let i=0;i<4;i++){ const p=out[i], r=out[(i+1)%4], q2=out[(i+2)%4];
+        const v1=[r[0]-p[0], r[1]-p[1]], v2=[q2[0]-r[0], q2[1]-r[1]], l1=Math.hypot(...v1), l2=Math.hypot(...v2);
+        if(l1<15 || l2<15) return null;
+        const cos=(v1[0]*v2[0]+v1[1]*v2[1])/(l1*l2); if(Math.abs(cos)>.6) return null; }   // corners between ~53° and ~127°
+      return out;
+    }
+    // Cut a grown region loose from leaks: shrink it so that narrow bridges (tape, halos) break,
+    // keep the largest piece, then grow that piece back, but only within the original region.
+    function boxCount(src, gw, gh, r, out, test){
+      const W1=gw+1;
+      for(let y=0;y<gh;y++){ let row=0; for(let x=0;x<gw;x++){ row+=src[y*gw+x]; integ[(y+1)*W1+x+1]=integ[y*W1+x+1]+row; } }
+      for(let y=0;y<gh;y++){ const y0=Math.max(0,y-r), y1=Math.min(gh,y+r+1);
+        for(let x=0;x<gw;x++){ const x0=Math.max(0,x-r), x1=Math.min(gw,x+r+1);
+          const n=integ[y1*W1+x1]-integ[y0*W1+x1]-integ[y1*W1+x0]+integ[y0*W1+x0];
+          out[y*gw+x]=test(n, (y1-y0)*(x1-x0)); } }
+    }
+    function cleanRegion(id, gw, gh){
+      const N=gw*gh, r=Math.max(3, Math.round(gw/70));
+      for(let i=0;i<N;i++) mk[i]=lab[i]===id?1:0;
+      boxCount(mk, gw, gh, r, mk2, (n,full)=>n===(2*r+1)*(2*r+1)?1:0);       // shrink
+      // largest connected piece of what is left
+      let best=0, bestN=0, cur=1; const comp=qbuf;
+      for(let i=0;i<N;i++){ if(mk2[i]!==1) continue;
+        cur++; if(cur>250) break; let head=0, tail=0, n=0; comp[tail++]=i; mk2[i]=cur;
+        while(head<tail){ const p=comp[head++], x=p%gw; n++;
+          if(x>0&&mk2[p-1]===1){ mk2[p-1]=cur; comp[tail++]=p-1; } if(x<gw-1&&mk2[p+1]===1){ mk2[p+1]=cur; comp[tail++]=p+1; }
+          if(p>=gw&&mk2[p-gw]===1){ mk2[p-gw]=cur; comp[tail++]=p-gw; } if(p<N-gw&&mk2[p+gw]===1){ mk2[p+gw]=cur; comp[tail++]=p+gw; } }
+        if(n>bestN){ bestN=n; best=cur; } }
+      if(!bestN) return 0;
+      for(let i=0;i<N;i++) mk2[i]=mk2[i]===best?1:0;
+      boxCount(mk2, gw, gh, r, bin.data, (n)=>n>0?255:0);                    // grow back...
+      let kept=0; for(let i=0;i<N;i++){ if(bin.data[i] && !mk[i]) bin.data[i]=0; else if(bin.data[i]) kept++; }   // ...within the region
+      return kept;
+    }
+    function quadFromBinary(gw, gh){
+      let best=null, bestA=0;
+      for(const c of CV.findContours(bin, buf)){
+        if(c.hole || c.length<60) continue;
+        const q=quadFromLines(c, gw, gh); if(!q) continue;
+        const a=Math.abs(area(q));
+        if(a<.06*gw*gh || a>.96*gw*gh) continue;
+        if(q.some(p=>p[0]<2||p[1]<2||p[0]>gw-3||p[1]>gh-3)) continue;   // whole sheet must be in view
+        if(a>bestA){ bestA=a; best=q; }
+      }
+      return best;
+    }
+    // The paper ends at the first lasting drop in brightness when moving outward from inside it.
+    // A side that sits further out (on the board, a ledge or a clip) is pulled in to that place.
+    function toPaper(q, d, w, h){
+      const cx=(q[0][0]+q[1][0]+q[2][0]+q[3][0])/4, cy=(q[0][1]+q[1][1]+q[2][1]+q[3][1])/4, lines=[];
+      let moved=false;
+      for(let i=0;i<4;i++){
+        const a=q[i], b=q[(i+1)%4], dx=b[0]-a[0], dy=b[1]-a[1], len=Math.hypot(dx,dy);
+        let nx=-dy/len, ny=dx/len;
+        if((cx-(a[0]+b[0])/2)*nx+(cy-(a[1]+b[1])/2)*ny<0){ nx=-nx; ny=-ny; }        // inward
+        const depth=Math.max(20, ((cx-(a[0]+b[0])/2)*nx+(cy-(a[1]+b[1])/2)*ny));     // side to middle
+        const dRef=.6*depth, run=Math.max(8, .06*depth|0), M=40, pts=[], ratios=[];
+        const v=(px,py)=> (px<1||py<1||px>=w-2||py>=h-2) ? -1 : lum(d,w,px,py);
+        for(let s2=0;s2<=M;s2++){
+          const t=.1+.8*s2/M, px=a[0]+dx*t, py=a[1]+dy*t;
+          let R=0, c=0; for(let e=-2;e<=2;e++){ const u=v(px+nx*dRef+dx/len*e*2, py+ny*dRef+dy/len*e*2); if(u>=0){ R+=u; c++; } }
+          if(!c) continue; R/=c;
+          const near=v(px+nx*4, py+ny*4); if(near>=0) ratios.push(near/Math.max(1,R));
+          const prof=[]; for(let k=Math.ceil(dRef); k>=-8; k--) prof.push([k, v(px+nx*k, py+ny*k)]);
+          for(let j=6;j<prof.length-run-1;j++){
+            const [k, u]=prof[j]; if(u<0) break;
+            const pin=(prof[j-2][1]+prof[j-3][1]+prof[j-4][1]+prof[j-5][1])/4;
+            if(pin<.7*R || u>=.85*pin) continue;
+            let lasting=true; for(let r=1;r<=run;r++){ const ur=prof[j+r][1]; if(ur<0 || ur>=.88*pin){ lasting=false; break; } }
+            if(lasting){ pts.push([px+nx*(k+1.5), py+ny*(k+1.5), k+1.5]); break; }
+          }
+        }
+        let ln=null;
+        const nearMed=ratios.length ? ratios.sort((x,y)=>x-y)[ratios.length>>1] : 1;
+        if(pts.length>=.45*M && Math.abs(nearMed-1)>.12){                           // just inside this side is not paper
+          const sh=pts.map(p=>p[2]).sort((x,y)=>x-y)[pts.length>>1];
+          if(sh>3){ const f=fitLine(pts.map(p=>[p[0],p[1]])); if(f){ const ang=Math.abs(f.ux*dy/len - f.uy*dx/len); if(ang<.12){ ln=f; moved=true; } } }
+        }
+        lines.push(ln || { mx:a[0], my:a[1], ux:dx/len, uy:dy/len });
+      }
+      if(!moved) return q;
+      const out=[]; for(let i=0;i<4;i++){ const m=meet(lines[(i+3)%4], lines[i]); if(!m) return q; out.push(m); }
+      const a0=Math.abs(area(q)), a1=Math.abs(area(out));
+      if(!(a1>.4*a0 && a1<a0)) return q;
+      return out;
+    }
+    function prepare(d,w,h){
+      const k=Math.max(1, Math.round(w/320)), gw=(w/k)|0, gh=(h/k)|0, N=gw*gh;
+      if(!gray || gray.width!==gw || gray.height!==gh){
+        gray=new CV.Image(gw,gh,new Uint8ClampedArray(N)); bin=new CV.Image(gw,gh,new Uint8ClampedArray(N)); buf=new Array((gw+2)*(gh+2));
+        sm=new Float32Array(N); tmp=new Float32Array(N); lab=new Uint8Array(N); qbuf=new Int32Array(N);
+        mk=new Uint8Array(N); mk2=new Uint8Array(N); integ=new Int32Array((gw+1)*(gh+1)); }
+      const g=gray.data, inv=1/(k*k), row=w*4;
+      for(let y=0;y<gh;y++){ const y0=y*k*row;
+        for(let x=0;x<gw;x++){ let s=0;
+          for(let yy=0;yy<k;yy++){ let i=y0+yy*row+x*k*4; for(let xx=0;xx<k;xx++,i+=4) s+=77*d[i]+150*d[i+1]+29*d[i+2]; }
+          g[y*gw+x]=(s*inv)>>8; } }
+      // light 3x3 smoothing for the region growing (separable: rows, then columns)
+      for(let y=0;y<gh;y++){ const o=y*gw;
+        tmp[o]=(g[o]+g[o+1])/2; for(let x=1;x<gw-1;x++) tmp[o+x]=(g[o+x-1]+g[o+x]+g[o+x+1])/3; tmp[o+gw-1]=(g[o+gw-2]+g[o+gw-1])/2; }
+      for(let x=0;x<gw;x++) sm[x]=(tmp[x]+tmp[x+gw])/2;
+      for(let i=gw;i<N-gw;i++) sm[i]=(tmp[i-gw]+tmp[i]+tmp[i+gw])/3;
+      for(let i=N-gw;i<N;i++) sm[i]=(tmp[i-gw]+tmp[i])/2;
+      return { k, gw, gh, N };
+    }
+    function find(d,w,h){
+      const { k, gw, gh, N } = prepare(d,w,h);
+      const candidates=[];
+      // 1) light regions grown from the brightest spots of a coarse grid
+      lab.fill(0);
+      const cells=[], CW=Math.ceil(gw/8), CH=Math.ceil(gh/10);
+      for(let cy=0;cy<gh;cy+=CH) for(let cx=0;cx<gw;cx+=CW){
+        let bi=-1, bv=-1; for(let y=cy;y<Math.min(gh,cy+CH);y+=2) for(let x=cx;x<Math.min(gw,cx+CW);x+=2){ const v=sm[y*gw+x]; if(v>bv){ bv=v; bi=y*gw+x; } }
+        if(bi>=0) cells.push([bv,bi]); }
+      cells.sort((a,b)=>b[0]-a[0]);
+      // the brightest spots first (as before), then the middle of the view, for when the paper is not the
+      // brightest thing in sight; a middle seed moves to the lightest point near it, off any drawn line
+      const seeds=cells.slice(0,30).map(c=>c[1]);
+      for(const [fx,fy] of [[.5,.5],[.5,.38],[.5,.62],[.38,.5],[.62,.5]]){
+        const x0=(fx*gw)|0, y0=(fy*gh)|0; let bi=y0*gw+x0, bv=-1;
+        for(let y=Math.max(0,y0-10);y<=Math.min(gh-1,y0+10);y++) for(let x=Math.max(0,x0-10);x<=Math.min(gw-1,x0+10);x++){ const v2=sm[y*gw+x]; if(v2>bv){ bv=v2; bi=y*gw+x; } }
+        seeds.push(bi); }
+      let id=0, grown=0;
+      for(const seed of seeds){
+        if(id>=250) break;
+        if(lab[seed]) continue;
+        const n=grow(seed, gw, gh, ++id);
+        if(n<.06*N) continue;
+        if(++grown>8) break;
+        if(cleanRegion(id, gw, gh) < .05*N) continue;
+        const q=quadFromBinary(gw, gh); if(q) candidates.push({ q, grown:true });
+      }
+      let pick=null, pickScore=-1e9;
+      const judge=cand=>{
+        const coarse=order(cand.q.map(p=>[p[0]*k+(k-1)/2, p[1]*k+(k-1)/2]));
+        // two passes: a wide search finds each edge, a narrow one settles it precisely
+        let wide=follow(d,w,h,coarse,Math.max(10,5*k),true);
+        if(wide){ const tp=toPaper(wide,d,w,h); if(tp!==wide) wide=follow(d,w,h,tp,Math.max(5,2*k+2),true) || tp; }
+        const fine=(wide && follow(d,w,h,wide,Math.max(5,2*k+2),true)) || wide;
+        if(!fine || !fine.stats) return;
+        if(fine.some(p=>p[0]<2||p[1]<2||p[0]>w-3||p[1]>h-3)) return;
+        const st=fine.stats;
+        if(!(st.worstRatio<.85)) return;                          // every edge must have a darker surface outside
+        if(!cand.grown && !(st.consistency>.75)) return;          // a plain light/dark split must not mix sheet and board
+        // prefer a large shape near the middle of the view; grown regions are the more reliable kind
+        const A=Math.abs(area(fine))/(w*h), mx=(fine[0][0]+fine[1][0]+fine[2][0]+fine[3][0])/4, my=(fine[0][1]+fine[1][1]+fine[2][1]+fine[3][1])/4;
+        const off=Math.hypot(mx/w-.5, my/h-.5)/.7071, score=A*(1-.7*off) + (cand.grown?.5:0) - (st.worstRatio>.75?.3:0);
+        if(score>pickScore){ pickScore=score; pick=fine; }
+      };
+      candidates.forEach(judge);
+      // 2) the classic light/dark split, for evenly lit scenes, only when growing found nothing
+      if(!pick){ CV.threshold(gray, bin, CV.otsu(gray)); const q=quadFromBinary(gw, gh); if(q) judge({ q, grown:false }); }
+      if(!pick) return null;
+      learnFrom(pick.stats);
+      return pick;
+    }
+    // match a freshly found sheet to the expected corner order (the sheet looks the same rotated)
+    function align(q, pred){
+      let best=null, bc=1e18;
+      for(let r=0;r<4;r++){ let c=0; for(let i=0;i<4;i++){ const p=q[(i+r)%4]; c+=Math.hypot(p[0]-pred[i][0], p[1]-pred[i][1]); }
+        if(c<bc){ bc=c; best=[0,1,2,3].map(i=>q[(i+r)%4]); } }
+      return best;
+    }
+    return { find, follow, followSides, findCorner, align };
+  }
+  /* PAPER-END */
+  /* STEADY-BEGIN */
+  // Calms the picture without making it trail: a One Euro filter on where four fixed paper points appear.
+  // Tiny, slow changes (sensor noise, autofocus) are smoothed hard; real movement passes through quickly.
+  // Values are in tracking-frame pixels; min = cutoff at rest (Hz), beta = how fast it opens up with speed.
+  const STEADY = { fast:{min:2.5, beta:.08}, normal:{min:1.0, beta:.04}, calm:{min:.35, beta:.02} };
+  function createSteadier(){
+    let state = null, t0 = 0;
+    const alpha = (cut, dt) => 1/(1 + 1/(2*Math.PI*cut*dt));
+    return {
+      reset(){ state = null; },
+      step(H, now, s, p, ref){
+        const meas = ref.map(q => { const v=apply(H,q[0],q[1]); return [v[0]/s, v[1]/s]; });
+        if(!state || meas.some((m,i) => Math.hypot(m[0]-state[i].x, m[1]-state[i].y) > 60)){   // first frame or a big jump: no smoothing
+          state = meas.map(m => ({ x:m[0], y:m[1], dx:0, dy:0 })); t0 = now; return H; }
+        const dt = Math.min(.25, Math.max(.001, (now-t0)/1000)); t0 = now;
+        const ad = alpha(1, dt);
+        meas.forEach((m,i) => { const S = state[i];
+          S.dx += ad*((m[0]-S.x)/dt - S.dx); S.dy += ad*((m[1]-S.y)/dt - S.dy);
+          const a = alpha(p.min + p.beta*Math.hypot(S.dx,S.dy), dt);
+          S.x += a*(m[0]-S.x); S.y += a*(m[1]-S.y); });
+        return solveH(ref, state.map(S => [S.x*s, S.y*s])) || H;
+      }
+    };
+  }
+  /* STEADY-END */
+  /* CORE-BEGIN */
+  // Paper aspect (width / height) from the four corners seen in perspective (Zhang & He,
+  // whiteboard rectification). q: top-left, top-right, bottom-right, bottom-left in image px.
+  function estimateAspect(q, cx, cy, fGuess){
+    const m1=[q[0][0]-cx, q[0][1]-cy, 1], m2=[q[1][0]-cx, q[1][1]-cy, 1], m3=[q[3][0]-cx, q[3][1]-cy, 1], m4=[q[2][0]-cx, q[2][1]-cy, 1];
+    const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]], dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+    const c14=cross(m1,m4);
+    const k2=dot(c14,m3)/dot(cross(m2,m4),m3), k3=dot(c14,m2)/dot(cross(m3,m4),m2);
+    const n2=[k2*m2[0]-m1[0], k2*m2[1]-m1[1], k2*m2[2]-m1[2]], n3=[k3*m3[0]-m1[0], k3*m3[1]-m1[1], k3*m3[2]-m1[2]];
+    const f2=-(n2[0]*n3[0]+n2[1]*n3[1])/(n2[2]*n3[2]), f=(Number.isFinite(f2) && f2>0) ? Math.sqrt(f2) : NaN;
+    const fUsed=(f>.5*fGuess && f<2*fGuess) ? f : fGuess;          // seen nearly straight on, f cannot be measured
+    const A=v=>(v[0]*v[0]+v[1]*v[1])/(fUsed*fUsed)+v[2]*v[2];
+    return { ratio:Math.sqrt(A(n2)/A(n3)), f, fUsed };
+  }
+
+  // Common sheet sizes (cm, portrait). The ratio alone cannot tell sizes of the same shape apart.
+  const PAPERS=[ [21,29.7,'A4'], [29.7,42,'A3'], [42,59.4,'A2'], [59.4,84.1,'A1'], [50,65,'50 × 65'], [50,70,'50 × 70'],
+                 [70,100,'70 × 100'], [30,40,'30 × 40'], [40,50,'40 × 50'], [24,32,'24 × 32'], [35,50,'35 × 50'] ];
+
+  // The camera as a pinhole with its centre in the middle of the frame and focal length f (frame px).
+  // With three edges of the sheet in view, where the fourth must be then follows from the sheet's real
+  // shape (mostly; see poseFromSides), instead of drifting with the guesswork of a plain homography.
+  const v3={ dot:(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2], cross:(a,b)=>[a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]],
+    add:(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]], sub:(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]], unit:a=>{ const n=Math.hypot(a[0],a[1],a[2])||1; return [a[0]/n,a[1]/n,a[2]/n]; } };
+  function rotVec(wx,wy,wz){
+    const th=Math.hypot(wx,wy,wz); if(th<1e-12) return [1,0,0, 0,1,0, 0,0,1];
+    const x=wx/th, y=wy/th, z=wz/th, c=Math.cos(th), s=Math.sin(th), v=1-c;
+    return [c+x*x*v, x*y*v-z*s, x*z*v+y*s,  y*x*v+z*s, c+y*y*v, y*z*v-x*s,  z*x*v-y*s, z*y*v+x*s, c+z*z*v];
+  }
+  // homography (paper -> frame px) to rotation + position of the sheet in front of the camera
+  function poseFromH(H, f, cx, cy){
+    const c1=[(H[0]-cx*H[6])/f, (H[3]-cy*H[6])/f, H[6]], c2=[(H[1]-cx*H[7])/f, (H[4]-cy*H[7])/f, H[7]], c3=[(H[2]-cx*H[8])/f, (H[5]-cy*H[8])/f, H[8]];
+    let l=2/(Math.hypot(...c1)+Math.hypot(...c2)); if(c3[2]*l<0) l=-l;
+    const a=v3.unit(c1), b=v3.unit(c2), s=v3.unit(v3.add(a,b)), d=v3.unit(v3.sub(a,b)), k=Math.SQRT1_2;
+    const r1=[(s[0]+d[0])*k,(s[1]+d[1])*k,(s[2]+d[2])*k], r2=[(s[0]-d[0])*k,(s[1]-d[1])*k,(s[2]-d[2])*k], r3=v3.cross(r1,r2);
+    return { R:[r1[0],r2[0],r3[0], r1[1],r2[1],r3[1], r1[2],r2[2],r3[2]], t:[c3[0]*l, c3[1]*l, c3[2]*l] };
+  }
+  function hFromPose(R, t, f, cx, cy){
+    return [f*R[0]+cx*R[6], f*R[1]+cx*R[7], f*t[0]+cx*t[2],  f*R[3]+cy*R[6], f*R[4]+cy*R[7], f*t[1]+cy*t[2],  R[6], R[7], t[2]];
+  }
+  // focal length from a homography of the whole sheet (true proportions): the paper's axes are at right
+  // angles and equally long. Returns 1/f^2 and how much the view's perspective says about it (how much
+  // nearer one end of the sheet is than the other; seen straight on, nothing).
+  function focalFrom(H, cx, cy, pw, ph){
+    const a=[H[0]-cx*H[6], H[3]-cy*H[6], H[6]], b=[H[1]-cx*H[7], H[4]-cy*H[7], H[7]];
+    const A1=a[0]*b[0]+a[1]*b[1], B1=a[2]*b[2], A2=a[0]*a[0]+a[1]*a[1]-b[0]*b[0]-b[1]*b[1], B2=a[2]*a[2]-b[2]*b[2];
+    const AA=A1*A1+A2*A2; if(!(AA>0)) return null;
+    return { g:-(A1*B1+A2*B2)/AA, strength:(Math.abs(H[6])*pw+Math.abs(H[7])*ph)/Math.abs(H[8]) };
+  }
+
+  // Locks onto the drawing sheet and gives, for every camera frame, where the sheet is:
+  // H maps paper millimetres to frame pixels. The whole sheet should be in view; while a hand covers
+  // an edge or one edge is just out of view, the other three keep it as long as they are enough to be
+  // sure, and for a moment it is held. States: search, lock, hold, weak (edges followed, not sure), lost.
+  function createSheetLock(){
+    const sheet=createPaperTracker(), steady=createSteadier();
+    let state='search', Hraw=null, Hs=null, corners=null, frameNo=0, lastSeen=-1e9, cand=null, candN=0, lastQuad=null, aspect=null;
+    let Hgood=null, gSum=0, gW=0, src='', velo=null, lastPts=null, lastT=0;
+    const HOLD_MS=700, GRACE_MS=150;
+    const meetL=(a,b)=>{ const den=a.ux*b.uy-a.uy*b.ux; if(Math.abs(den)<.3) return null; const t=((b.mx-a.mx)*b.uy-(b.my-a.my)*b.ux)/den; return [a.mx+a.ux*t, a.my+a.uy*t]; };
+    // three or more visible edges (a hand over one side): line them up, corners where two meet are exact
+    function fromSides(sides, Hp){
+      let Hc=Hp;
+      for(let it=0; it<3; it++){
+        const S=[], D=[];
+        sides.forEach((r,i)=>{ if(!r) return; const A=corners[i], B=corners[(i+1)%4];
+          for(let j=0;j<=8;j++){ const t=r.t0+(r.t1-r.t0)*j/8, P=[A[0]+(B[0]-A[0])*t, A[1]+(B[1]-A[1])*t];
+            const q=apply(Hc,P[0],P[1]), l=r.ln, k=(q[0]-l.mx)*l.ux+(q[1]-l.my)*l.uy;
+            for(let w=0;w<4;w++){ S.push(P); D.push([l.mx+l.ux*k, l.my+l.uy*k]); } } });
+        for(let i=0;i<4;i++){ const a=sides[(i+3)%4], b=sides[i]; if(!a || !b) continue; const m=meetL(a.ln,b.ln); if(m) for(let w=0;w<8;w++){ S.push(corners[i]); D.push(m); } }
+        for(const c of corners){ S.push(c); D.push(apply(Hc,c[0],c[1])); }
+        Hc=solveH(S,D) || Hc;
+      }
+      return Hc;
+    }
+    // Three edges: start from the plain fit, then let the camera model place the missing edge. Three edges
+    // do not always pin the sheet down: seen with an edge across the middle of the view, a slight turn hardly
+    // changes anything visible, yet moves the hidden edge a lot. So the answer comes with how far off it could
+    // be over the part of the sheet in view, and an unsure answer is not used.
+    function poseFromSides(sides, Hp, f, cx, cy, w, h, fSure){
+      const obs=[];
+      sides.forEach((r,i)=>{ if(!r) return; const A=corners[i], B=corners[(i+1)%4], n=[-r.ln.uy, r.ln.ux];
+        for(let j=0;j<=8;j++){ const t=r.t0+(r.t1-r.t0)*j/8; obs.push([A[0]+(B[0]-A[0])*t, A[1]+(B[1]-A[1])*t, r.ln.mx, r.ln.my, n[0], n[1]]); } });
+      const prior=corners.map(c=>[c[0], c[1], ...apply(Hp,c[0],c[1])]), PW=.003, NO=obs.length;
+      const res=(R,t,fl)=>{ const Hm=hFromPose(R,t,fl,cx,cy), out=[];
+        for(const o of obs){ const p=apply(Hm,o[0],o[1]); out.push((p[0]-o[2])*o[4]+(p[1]-o[3])*o[5]); }
+        for(const o of prior){ const p=apply(Hm,o[0],o[1]); out.push(PW*(p[0]-o[2]), PW*(p[1]-o[3])); }
+        return out; };
+      const P0=poseFromH(fromSides(sides, Hp), f, cx, cy), tz=Math.abs(P0.t[2])||1, st=[1e-4,1e-4,1e-4, 1e-4*tz,1e-4*tz,1e-4*tz];
+      const moved=(k,R,t)=>{ const dv=[0,0,0,0,0,0]; dv[k]=st[k]; return [mul(rotVec(dv[0],dv[1],dv[2]), R), [t[0]+dv[3], t[1]+dv[4], t[2]+dv[5]]]; };
+      const jac=(R,t,fl,r0)=>{ const J=[]; for(let k=0;k<6;k++){ const [Rk,tk]=moved(k,R,t), rk=res(Rk,tk,fl); J.push(rk.map((v,i)=>(v-r0[i])/st[k])); } return J; };
+      const normal=(J,r,rows)=>{ const A=Array.from({length:6},()=>new Float64Array(7));
+        for(let a=0;a<6;a++){ for(let b=0;b<6;b++){ let s=0; for(let i=0;i<rows;i++) s+=J[a][i]*J[b][i]; A[a][b]=s; }
+          let g=0; if(r) for(let i=0;i<rows;i++) g+=J[a][i]*r[i]; A[a][6]=-g; }
+        return A; };
+      const solve6=(A,cols)=>{   // Gauss-Jordan on [A | B] in place; false if singular
+        for(let c=0;c<6;c++){ let pv=c; for(let r=c+1;r<6;r++) if(Math.abs(A[r][c])>Math.abs(A[pv][c])) pv=r;
+          if(Math.abs(A[pv][c])<1e-18) return false; [A[c],A[pv]]=[A[pv],A[c]];
+          for(let r=0;r<6;r++){ if(r===c) continue; const m=A[r][c]/A[c][c]; for(let j=c;j<cols;j++) A[r][j]-=m*A[c][j]; } }
+        return true; };
+      // Levenberg-Marquardt over a small turn (3) and shift (3) of the sheet
+      const fit=(R,t,fl)=>{
+        let r0=res(R,t,fl), cost=r0.reduce((s,v)=>s+v*v,0), lam=1e-3;
+        for(let it=0; it<10; it++){
+          const A=normal(jac(R,t,fl,r0),r0,r0.length);
+          for(let a=0;a<6;a++) A[a][a]*=1+lam;
+          if(!solve6(A,7)) break;
+          const dx=A.map((row,i)=>row[6]/row[i]);
+          const Rn=mul(rotVec(dx[0],dx[1],dx[2]), R), tn=[t[0]+dx[3], t[1]+dx[4], t[2]+dx[5]], rn=res(Rn,tn,fl), cn=rn.reduce((s,v)=>s+v*v,0);
+          if(cn<cost){ R=Rn; t=tn; r0=rn; const gain=cost-cn; cost=cn; lam=Math.max(1e-6,lam*.3); if(gain<1e-6*cost+1e-9) break; }
+          else lam*=10;
+        }
+        return { R, t, r0 };
+      };
+      const F=fit(P0.R, P0.t, f), Hm=hFromPose(F.R,F.t,f,cx,cy);
+      let lc=0; for(let i=0;i<NO;i++) lc+=F.r0[i]*F.r0[i];
+      const rms=Math.sqrt(lc/Math.max(1,NO));
+      // the part of the sheet in view
+      const grid=[]; for(let gy=0;gy<=4;gy++) for(let gx=0;gx<=4;gx++){ const P=[corners[1][0]*gx/4, corners[2][1]*gy/4], p=apply(Hm,P[0],P[1]);
+        if(p[0]>=0 && p[1]>=0 && p[0]<=w && p[1]<=h) grid.push([P,p]); }
+      // how sure: edge-point noise (about half a pixel) carried through the edges alone to the sheet in view ...
+      let unc=Infinity;
+      const N0=normal(jac(F.R,F.t,f,F.r0),null,NO), A=N0.map((row,a)=>{ const o=new Float64Array(12); for(let j=0;j<6;j++) o[j]=row[j]; o[6+a]=1; return o; });
+      if(grid.length && solve6(A,12)){
+        const C=A.map((row,i)=>Array.from(row.slice(6,12), v=>v/row[i])), sig2=Math.max(.5,rms)**2;
+        unc=0;
+        for(const [P,p] of grid){
+          const jx=[], jy=[]; for(let k=0;k<6;k++){ const [Rk,tk]=moved(k,F.R,F.t), q=apply(hFromPose(Rk,tk,f,cx,cy),P[0],P[1]); jx.push((q[0]-p[0])/st[k]); jy.push((q[1]-p[1])/st[k]); }
+          let vx=0, vy=0; for(let a=0;a<6;a++) for(let b=0;b<6;b++){ vx+=jx[a]*C[a][b]*jx[b]; vy+=jy[a]*C[a][b]*jy[b]; }
+          unc=Math.max(unc, Math.sqrt(sig2*(vx+vy)));
+        }
+        // ... and a lens a little different from the one assumed: its focal length (less sure of it until oblique
+        // views have shown it) and its centre a little off the middle of the frame
+        const df=fSure ? .04 : .1, PP=.02;
+        for(const [fl,ccx,ccy] of [[f*(1+df),cx,cy], [f,cx+PP*w,cy], [f,cx,cy+PP*h]]){
+          const resK=(R,t)=>{ const Hk=hFromPose(R,t,fl,ccx,ccy), out=[]; for(const o of obs){ const p=apply(Hk,o[0],o[1]); out.push((p[0]-o[2])*o[4]+(p[1]-o[3])*o[5]); } return out; };
+          // refit the visible edges with this lens (a few Gauss-Newton steps from the answer)
+          let R=F.R, t=F.t;
+          for(let it=0; it<4; it++){ const r0=resK(R,t), J=[]; for(let k=0;k<6;k++){ const [Rk,tk]=moved(k,R,t), rk=resK(Rk,tk); J.push(rk.map((v,i)=>(v-r0[i])/st[k])); }
+            const A=normal(J,r0,NO); for(let a=0;a<6;a++) A[a][a]*=1+1e-6; if(!solve6(A,7)) break;
+            const dx=A.map((row,i)=>row[6]/row[i]); R=mul(rotVec(dx[0],dx[1],dx[2]), R); t=[t[0]+dx[3], t[1]+dx[4], t[2]+dx[5]]; }
+          const Hk=hFromPose(R,t,fl,ccx,ccy);
+          let uk=0; for(const [P,p] of grid){ const q=apply(Hk,P[0],P[1]); uk=Math.max(uk, Math.hypot(q[0]-p[0], q[1]-p[1])); }
+          unc=Math.hypot(unc, uk);
+        }
+      }
+      // the visible edges must fit; "sure" when it is good enough to draw by
+      return rms<1.5 ? { H:Hm, sure: unc<2.5 } : null;
+    }
+    function lockOn(q, w, h, keepPaper){
+      if(!keepPaper || !corners){
+        aspect=estimateAspect(q, w/2, h/2, .74*Math.max(w,h)).ratio;
+        const H=1000, W=Math.round(1000*aspect);
+        corners=[[0,0],[W,0],[W,H],[0,H]];
+      }
+      Hraw=solveH(corners, q); Hgood=Hraw; velo=null; lastPts=null; steady.reset(); state='lock';
+    }
+    return {
+      get state(){ return state; },
+      get corners(){ return corners; },
+      get aspect(){ return aspect; },
+      // the real size (mm) of the sheet; the lock keeps its place, only the units change
+      setPaper(wmm, hmm){
+        if(!corners){ corners=[[0,0],[wmm,0],[wmm,hmm],[0,hmm]]; return; }
+        const sx=corners[1][0]/wmm, sy=corners[2][1]/hmm;
+        if(Hraw) Hraw=mul(Hraw, [sx,0,0, 0,sy,0, 0,0,1]);
+        if(Hgood) Hgood=mul(Hgood, [sx,0,0, 0,sy,0, 0,0,1]);
+        corners=[[0,0],[wmm,0],[wmm,hmm],[0,hmm]]; steady.reset();
+      },
+      reset(){ state='search'; Hraw=null; Hs=null; Hgood=null; velo=null; lastPts=null; cand=null; candN=0; steady.reset(); },
+      get focal(){ return gW>0 ? 1/Math.sqrt(gSum/gW) : null; },
+      get source(){ return src; },
+      get raw(){ return Hraw; },
+      forget(){ this.reset(); corners=null; aspect=null; },
+      // d: RGBA frame (w x h). Returns { state, H (smoothed, paper mm -> frame px) | null, quad: outline while searching }
+      step(d, w, h, now){
+        frameNo++;
+        let Hn=null, q=null, Hpart=null, Hweak=null, fresh=true;
+        if(Hraw && (state==='lock' || state==='hold' || state==='weak')){
+          const cx=w/2, cy=h/2, fGuess=.74*Math.max(w,h);
+          // focal length: the guess, corrected by what oblique views of the whole sheet have shown
+          const g0=1/(fGuess*fGuess), f=1/Math.sqrt((gSum+4*g0)/(gW+4));
+          const pred=corners.map(c=>apply(Hraw,c[0],c[1]));
+          // where the sheet is heading: the last movement carried on (the phone moves smoothly), and as a
+          // fallback right where it was
+          const tries=[[pred, Hraw]];
+          if(velo && now-velo.t<120){ const k=Math.min(1.5,(now-velo.t)/Math.max(1,velo.dt)), pv=pred.map((p,i)=>[p[0]+k*velo.v[i][0], p[1]+k*velo.v[i][1]]);
+            const Hv=solveH(corners,pv); if(Hv) tries.unshift([pv, Hv]); }
+          src='';
+          for(const [pp] of tries){ q=sheet.follow(d,w,h,pp,16); if(q){ src='edges4'; break; } }
+          if(!q){
+            for(const [pp, Hp] of tries){
+              const sides=sheet.followSides(d,w,h,pp,16), nv=sides.filter(Boolean).length;
+              if(nv>=3){ const r=poseFromSides(sides, Hp, f, cx, cy, w, h, gW>2);
+                if(r && r.sure){ Hn=r.H; src='edges3'; break; }
+                if(r && !Hweak) Hweak=r.H; }
+              // a hand over part of the sheet with the phone still: two edges meeting at a corner, right where
+              // they were when the sheet was last properly seen, are enough to stay there (never to wander off)
+              if(nv===2 && Hgood && !Hpart && sides.some((r,i)=>r && sides[(i+1)%4])){
+                const ref=corners.map(c=>apply(Hgood,c[0],c[1]));
+                const still=sides.every((r,i)=>{ if(!r) return true; const a=ref[i], b=ref[(i+1)%4], dx=b[0]-a[0], dy=b[1]-a[1], len=Math.hypot(dx,dy);
+                  return Math.abs((r.ln.mx-a[0])*(-dy/len)+(r.ln.my-a[1])*(dx/len)) < 5; });
+                if(still) Hpart=Hgood;
+              }
+            }
+          }
+          // not every edge in view: the whole sheet may be there after all (the hand has gone, or the phone
+          // jerked further than the edges are searched). The full detector decides; same sheet shape only.
+          if(!q && (frameNo%3===0 || (!Hn && !Hweak))){
+            const fq=sheet.find(d,w,h);
+            if(fq){
+              const a=sheet.align(fq,pred), ref=Hn ? corners.map(c=>apply(Hn,c[0],c[1])) : pred, size=Math.hypot(ref[2][0]-ref[0][0], ref[2][1]-ref[0][1]);
+              const known=corners[1][0]/corners[2][1], seen=estimateAspect(a, cx, cy, f).ratio;
+              if(a.every((p,i)=>Math.hypot(p[0]-ref[i][0], p[1]-ref[i][1]) < .25*size) && Math.abs(seen/known-1) < .06){ q=a; src='find'; Hn=null; }
+            }
+          }
+          if(q){ Hn=solveH(corners,q);
+            // learn the lens from oblique whole-sheet views
+            const fm=Hn && focalFrom(Hn, cx, cy, corners[1][0], corners[2][1]);
+            if(fm && fm.g>0 && fm.strength>.03){ const gv=Math.min(4*g0, Math.max(.25*g0, fm.g)), wt=Math.min(1, (fm.strength/.15)**2);
+              gSum=gSum*.995+wt*gv; gW=gW*.995+wt; }
+          }
+          if(Hn){
+            const now4=corners.map(c=>apply(Hn,c[0],c[1]));
+            // movement since the previous frame, for the next prediction (only between two good frames)
+            velo = state==='lock' && lastPts ? { v:now4.map((p,i)=>{ const dx=p[0]-lastPts[i][0], dy=p[1]-lastPts[i][1], m=Math.hypot(dx,dy), c=m>60?60/m:1; return [dx*c, dy*c]; }), t:now, dt:now-lastT } : null;
+            lastPts=now4; lastT=now; Hraw=Hn; lastSeen=now; state='lock'; Hgood=Hn;
+          }
+          else if(Hpart && now-lastSeen<HOLD_MS){ Hraw=Hpart; state='hold'; src='hold2'; velo=null; lastPts=null; }
+          // three edges, but not enough to draw by: keep following them quietly, and say so
+          else if(Hweak){ Hraw=Hweak; state = now-lastSeen<GRACE_MS ? 'hold' : 'weak'; fresh=false; src='weak'; velo=null; lastPts=null; }
+          // nothing where the sheet should be: the phone has moved. A blink is forgiven, then it is honest about it.
+          else { state = now-lastSeen<GRACE_MS ? 'hold' : 'lost'; fresh=false; src=''; velo=null; lastPts=null; }
+          lastQuad = q;
+        } else {
+          // searching: the whole sheet, standing still for a moment before locking on
+          const f = frameNo%2===0 || state==='lost' ? sheet.find(d,w,h) : lastQuad;
+          lastQuad=f;
+          if(f){
+            if(state==='lost' && corners && Hraw){
+              // back on the sheet: same checks as the first time (steady for a moment), and it must be the same shape
+              const pred=corners.map(c=>apply(Hraw,c[0],c[1])), a=sheet.align(f,pred);
+              const known=corners[1][0]/corners[2][1], seen=estimateAspect(a, w/2, h/2, .74*Math.max(w,h)).ratio;
+              if(Math.abs(seen/known-1) < .06){
+                const same = cand && a.every((p,i)=>Math.hypot(p[0]-cand[i][0], p[1]-cand[i][1])<6);
+                candN = same ? candN+1 : 1; cand=a;
+                if(candN>=3){ lockOn(a, w, h, true); lastSeen=now; candN=0; }
+              } else candN=0;
+            } else {
+              const same = cand && f.every((p,i)=>Math.hypot(p[0]-cand[i][0], p[1]-cand[i][1])<8);
+              candN = same ? candN+1 : 1; cand=f;
+              if(candN>=3){ lockOn(f, w, h, false); lastSeen=now; }
+              else state='search';
+            }
+          } else { candN=0; if(state!=='lost') state='search'; }
+        }
+        // fresh: false when the pose could not be checked in this frame (keep showing the last good picture)
+        if((state==='lock' || state==='hold') && Hraw){ if(fresh) Hs=steady.step(Hraw, now, 1, STEADY.fast, corners); return { state, H:Hs, quad:null, fresh }; }
+        return { state, H:null, quad:lastQuad };
+      }
+    };
+  }
+  /* CORE-END */
+
+  /* ================= app ================= */
+  const $ = s => document.querySelector(s);
+  const stage=$('#stage'), video=$('#video'), glc=$('#gl'), ov=$('#ov'), octx=ov.getContext('2d');
+  const inFrame = (() => { try{ return window.self !== window.top; }catch(_){ return true; } })();
+  const store = {
+    get(k){ try{ return JSON.parse(localStorage.getItem('lehevaade:'+k)); }catch(_){ return null; } },
+    set(k,v){ try{ localStorage.setItem('lehevaade:'+k, JSON.stringify(v)); }catch(_){} },
+    del(k){ try{ localStorage.removeItem('lehevaade:'+k); }catch(_){} }
+  };
+  // The same picture store as Kalkeerkaamera (same site), so pictures show up in both
+  const idb = (() => {
+    let p=null;
+    const open=()=>p || (p=new Promise((res,rej)=>{ try{ const r=indexedDB.open('kalkeer',1);
+      r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }catch(e){ rej(e); } }));
+    const tx=async (mode, fn)=>{ const db=await open(); return await new Promise((res,rej)=>{ const t=db.transaction('kv',mode); const out=fn(t.objectStore('kv')); t.oncomplete=()=>res(out && out.result); t.onerror=()=>rej(t.error); }); };
+    return { async get(k){ try{ return await tx('readonly', s=>s.get(k)); }catch(_){ return null; } },
+             async set(k,v){ try{ await tx('readwrite', s=>s.put(v,k)); return true; }catch(_){ return false; } },
+             async del(k){ try{ await tx('readwrite', s=>s.delete(k)); }catch(_){} } };
+  })();
+
+  const st = { opacity:.5, filter:'photo', levels:5, edge:55, grid:false, gridCm:5, peek:false, moving:false };
+  let project = { id:'sample', paper:null, place:null };      // paper: {w,h} mm; place: {u,v,s,rot,flip} relative to the paper
+  let projects = [], src=null, stream=null, camId=null, ui='idle', wakeLock=null;
+
+  /* ---------- the picture and its look ---------- */
+  function makeSample(){
+    const c=document.createElement('canvas'); c.width=900; c.height=1200; const g=c.getContext('2d');
+    const bg=g.createLinearGradient(0,0,0,1200); bg.addColorStop(0,'#d3cec4'); bg.addColorStop(.6,'#aea89c'); bg.addColorStop(.6,'#958f83'); bg.addColorStop(1,'#d9d4c9');
+    g.fillStyle=bg; g.fillRect(0,0,900,1200);
+    g.fillStyle='#d8d3c8'; g.beginPath(); g.moveTo(110,520); g.lineTo(250,450); g.lineTo(420,500); g.lineTo(280,575); g.closePath(); g.fill();
+    g.fillStyle='#8b8579'; g.beginPath(); g.moveTo(110,520); g.lineTo(280,575); g.lineTo(280,800); g.lineTo(110,740); g.closePath(); g.fill();
+    g.fillStyle='#4f4b44'; g.beginPath(); g.moveTo(280,575); g.lineTo(420,500); g.lineTo(420,720); g.lineTo(280,800); g.closePath(); g.fill();
+    const r=g.createRadialGradient(470,560,15,560,680,230); r.addColorStop(0,'#f7f4ee'); r.addColorStop(.3,'#cfc9bd'); r.addColorStop(.7,'#6c675e'); r.addColorStop(.9,'#38352f'); r.addColorStop(1,'#5b564d');
+    g.fillStyle=r; g.beginPath(); g.arc(560,680,225,0,Math.PI*2); g.fill();
+    return c;
+  }
+  const refCanvas=document.createElement('canvas');
+  let refDirty=true, raf=0;
+  const scheduleRender=()=>{ cancelAnimationFrame(raf); raf=requestAnimationFrame(renderRef); };
+  function renderRef(){
+    if(!src) return;
+    const k=Math.min(1, 2048/Math.max(src.width,src.height)), w=Math.round(src.width*k), h=Math.round(src.height*k);
+    refCanvas.width=w; refCanvas.height=h;
+    const c=refCanvas.getContext('2d',{ willReadFrequently:true });
+    c.clearRect(0,0,w,h); c.drawImage(src,0,0,w,h);
+    if(st.filter!=='photo'){
+      const d=c.getImageData(0,0,w,h), p=d.data, n=w*h, L=new Float32Array(n);
+      for(let i=0,j=0;i<n;i++,j+=4) L[i]=.299*p[j]+.587*p[j+1]+.114*p[j+2];
+      if(st.filter==='gray'){ for(let i=0,j=0;i<n;i++,j+=4) p[j]=p[j+1]=p[j+2]=L[i]; }
+      else if(st.filter==='tones'){ const lv=st.levels-1; for(let i=0,j=0;i<n;i++,j+=4){ const v=Math.round(L[i]/255*lv)/lv*255; p[j]=p[j+1]=p[j+2]=v; } }
+      else if(st.filter==='edge'){
+        const B=new Float32Array(n);
+        for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){ const i=y*w+x; B[i]=(L[i-w-1]+L[i-w]+L[i-w+1]+L[i-1]+L[i]+L[i+1]+L[i+w-1]+L[i+w]+L[i+w+1])/9; }
+        const t=250-st.edge*2.3;
+        for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const i=y*w+x, j=i*4; let a=0;
+          if(x>0&&y>0&&x<w-1&&y<h-1){ const gx=-B[i-w-1]-2*B[i-1]-B[i+w-1]+B[i-w+1]+2*B[i+1]+B[i+w+1], gy=-B[i-w-1]-2*B[i-w]-B[i-w+1]+B[i+w-1]+2*B[i+w]+B[i+w+1];
+            a=Math.max(0,Math.min(255,(Math.hypot(gx,gy)-t)*3)); }
+          p[j]=p[j+1]=p[j+2]=18; p[j+3]=a; }
+      }
+      c.putImageData(d,0,0);
+    }
+    refDirty=true; draw();
+  }
+
+  /* ---------- where things are ---------- */
+  const lock = createSheetLock();
+  let H=null, lockState='search', lastQuad=null, frameW=640, frameH=1138;
+  const view = { z:1, tx:0, ty:0, fitZ:1 };                  // paper mm -> screen css px
+  const paperSize = () => { const c=lock.corners; return c ? [c[1][0], c[2][1]] : (project.paper ? [project.paper.w, project.paper.h] : [500,650]); };
+  function viewport(){ const W=stage.clientWidth, Hh=stage.clientHeight, top=88, bottom=Math.min(Hh*.42, ($('.dock-inner')?.offsetHeight||220)); return { W, H:Hh, top, bottom }; }
+  function fitView(){
+    const [pw,ph]=paperSize(), v=viewport(), aw=v.W-24, ah=Math.max(100, v.H-v.top-v.bottom-16);
+    view.fitZ=Math.min(aw/pw, ah/ph); view.z=view.fitZ;
+    view.tx=(v.W-pw*view.z)/2; view.ty=v.top+(ah-ph*view.z)/2+8; syncZoomPill(); draw();
+  }
+  function clampView(){
+    const [pw,ph]=paperSize(), v=viewport();
+    view.z=Math.max(view.fitZ*.8, Math.min(view.fitZ*14, view.z));
+    const minX=v.W*.5-pw*view.z, maxX=v.W*.5, minY=v.H*.5-ph*view.z, maxY=v.H*.5;
+    view.tx=Math.max(minX, Math.min(maxX, view.tx)); view.ty=Math.max(minY, Math.min(maxY, view.ty));
+  }
+  const P2S = () => [view.z,0,view.tx, 0,view.z,view.ty, 0,0,1];
+  function placeMm(){
+    const [pw,ph]=paperSize(), pl=project.place || fitPlace();
+    const ar = src ? src.height/src.width : 1.3;
+    return { cx:pl.u*pw, cy:pl.v*ph, w:pl.s*pw, h:pl.s*pw*ar, rot:pl.rot||0, flip:pl.flip||1 };
+  }
+  function fitPlace(){
+    const [pw,ph]=paperSize(), ar = src ? src.height/src.width : 1.3, s=Math.min(.9, .9*ph/(pw*ar));
+    return { u:.5, v:.5, s, rot:0, flip:1 };
+  }
+  // reference image uv (0..1) -> paper mm
+  function R(){ const p=placeMm(), c=Math.cos(p.rot), s=Math.sin(p.rot), a=p.w*p.flip, b=p.h;
+    return [c*a,-s*b, p.cx-(c*a*.5-s*b*.5), s*a,c*b, p.cy-(s*a*.5+c*b*.5), 0,0,1]; }
+
+  /* ---------- drawing the straightened sheet (WebGL) ---------- */
+  const gl = glc.getContext('webgl', { antialias:false, premultipliedAlpha:false, alpha:false }) || null;
+  let prog=null, texCam=null, texRef=null, U={};
+  function glInit(){
+    if(!gl) return false;
+    const sh=(type,srcTxt)=>{ const s=gl.createShader(type); gl.shaderSource(s,srcTxt); gl.compileShader(s); return s; };
+    prog=gl.createProgram();
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, 'attribute vec2 a; void main(){ gl_Position=vec4(a,0.0,1.0); }'));
+    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision highp float;
+      uniform sampler2D uCam, uRef; uniform mat3 uS2P, uP2C, uP2R; uniform float uH, uOp, uHasRef, uHasCam; uniform vec2 uPaper;
+      void main(){
+        vec2 sp=vec2(gl_FragCoord.x, uH-gl_FragCoord.y);
+        vec3 p=uS2P*vec3(sp,1.0); vec2 pm=p.xy/p.z;
+        vec3 c=uP2C*vec3(pm,1.0); vec2 cu=c.xy/c.z;
+        vec3 col=vec3(0.063,0.067,0.075);
+        if(uHasCam>0.5 && c.z>0.0 && cu.x>=0.0 && cu.y>=0.0 && cu.x<=1.0 && cu.y<=1.0) col=texture2D(uCam,cu).rgb;
+        if(pm.x<0.0 || pm.y<0.0 || pm.x>uPaper.x || pm.y>uPaper.y) col*=0.5;
+        if(uHasRef>0.5){ vec3 r=uP2R*vec3(pm,1.0); vec2 ru=r.xy/r.z;
+          if(ru.x>=0.0 && ru.y>=0.0 && ru.x<=1.0 && ru.y<=1.0){ vec4 rc=texture2D(uRef,ru); col=mix(col, rc.rgb, rc.a*uOp); } }
+        gl_FragColor=vec4(col,1.0);
+      }`));
+    gl.linkProgram(prog); if(!gl.getProgramParameter(prog, gl.LINK_STATUS)) return false;
+    gl.useProgram(prog);
+    const buf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+    const loc=gl.getAttribLocation(prog,'a'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+    const mk=()=>{ const t=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,t);
+      for(const [k,v] of [[gl.TEXTURE_MIN_FILTER,gl.LINEAR],[gl.TEXTURE_MAG_FILTER,gl.LINEAR],[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D,k,v);
+      return t; };
+    texCam=mk(); texRef=mk();
+    for(const n of ['uCam','uRef','uS2P','uP2C','uP2R','uH','uOp','uHasRef','uHasCam','uPaper']) U[n]=gl.getUniformLocation(prog,n);
+    gl.uniform1i(U.uCam,0); gl.uniform1i(U.uRef,1);
+    return true;
+  }
+  const glOK = glInit();
+  const colMajor = m => new Float32Array([m[0],m[3],m[6], m[1],m[4],m[7], m[2],m[5],m[8]]);
+  let camFresh=false;
+  function draw(){
+    drawOverlay();
+    if(!glOK || ui!=='paper' || !H) return;
+    const dpr=Math.min(2, window.devicePixelRatio||1), W=Math.round(stage.clientWidth*dpr), Hh=Math.round(stage.clientHeight*dpr);
+    if(glc.width!==W || glc.height!==Hh){ glc.width=W; glc.height=Hh; }
+    gl.viewport(0,0,W,Hh);
+    if(refDirty && refCanvas.width){ gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texRef);
+      try{ gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,refCanvas); refDirty=false; }catch(_){} }
+    if(camFresh){ gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texCam);
+      try{ gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,video); }catch(_){} camFresh=false; }
+    const S=[view.z*dpr,0,view.tx*dpr, 0,view.z*dpr,view.ty*dpr, 0,0,1];
+    gl.uniformMatrix3fv(U.uS2P,false,colMajor(inv(S)));
+    gl.uniformMatrix3fv(U.uP2C,false,colMajor(mul([1/frameW,0,0, 0,1/frameH,0, 0,0,1], H)));
+    gl.uniformMatrix3fv(U.uP2R,false,colMajor(inv(R())));
+    const [pw,ph]=paperSize();
+    gl.uniform2f(U.uPaper,pw,ph); gl.uniform1f(U.uH,Hh); gl.uniform1f(U.uOp, st.peek?0:st.opacity);
+    gl.uniform1f(U.uHasRef, refCanvas.width?1:0); gl.uniform1f(U.uHasCam, 1);
+    gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  }
+
+  /* ---------- overlay: outline while searching, grid, picture frame, minimap ---------- */
+  let mini=null;
+  function videoToScreen(){ const W=stage.clientWidth, Hh=stage.clientHeight, k=Math.max(W/frameW, Hh/frameH); return [k,0,(W-frameW*k)/2, 0,k,(Hh-frameH*k)/2, 0,0,1]; }
+  function drawOverlay(){
+    const dpr=Math.min(2, window.devicePixelRatio||1), W=stage.clientWidth, Hh=stage.clientHeight;
+    if(ov.width!==Math.round(W*dpr) || ov.height!==Math.round(Hh*dpr)){ ov.width=Math.round(W*dpr); ov.height=Math.round(Hh*dpr); }
+    octx.setTransform(1,0,0,1,0,0); octx.clearRect(0,0,ov.width,ov.height); octx.setTransform(dpr,0,0,dpr,0,0);
+    mini=null;
+    if(ui==='camera' && lastQuad){
+      const V=videoToScreen(), q=lastQuad.map(p=>apply(V,p[0],p[1]));
+      octx.setLineDash([10,7]); octx.lineWidth=2.5; octx.strokeStyle='#d9b45e';
+      octx.beginPath(); q.forEach((p,i)=>i?octx.lineTo(p[0],p[1]):octx.moveTo(p[0],p[1])); octx.closePath(); octx.stroke(); octx.setLineDash([]);
+    }
+    if(ui!=='paper') return;
+    const M=P2S(), [pw,ph]=paperSize();
+    if(st.grid){
+      const step = project.paper ? st.gridCm*10 : ph/10;
+      octx.lineWidth=1; octx.strokeStyle='rgba(217,180,94,.75)'; octx.beginPath();
+      for(let x=0;x<=pw+.01;x+=step){ const a=apply(M,x,0), b=apply(M,x,ph); octx.moveTo(a[0],a[1]); octx.lineTo(b[0],b[1]); }
+      for(let y=0;y<=ph+.01;y+=step){ const a=apply(M,0,y), b=apply(M,pw,y); octx.moveTo(a[0],a[1]); octx.lineTo(b[0],b[1]); }
+      octx.stroke();
+    }
+    if(st.moving){
+      const RR=mul(M,R()), q=[[0,0],[1,0],[1,1],[0,1]].map(p=>apply(RR,p[0],p[1]));
+      octx.setLineDash([8,6]); octx.lineWidth=2; octx.strokeStyle='#d9b45e';
+      octx.beginPath(); q.forEach((p,i)=>i?octx.lineTo(p[0],p[1]):octx.moveTo(p[0],p[1])); octx.closePath(); octx.stroke(); octx.setLineDash([]);
+    }
+    if(view.z > view.fitZ*1.25){
+      // minimap: the whole sheet, with the part on screen marked; tap it to jump
+      const mh=96, mw=mh*pw/ph, mx=W-mw-Math.max(16, W*.04), my=92, k=mh/ph;
+      octx.fillStyle='rgba(23,24,28,.85)'; octx.fillRect(mx-4,my-4,mw+8,mh+8);
+      octx.fillStyle='rgba(236,233,226,.9)'; octx.fillRect(mx,my,mw,mh);
+      const x0=(-view.tx)/view.z, y0=(viewport().top-view.ty)/view.z, x1=(W-view.tx)/view.z, y1=(Hh-viewport().bottom-view.ty)/view.z;
+      octx.strokeStyle='#d9b45e'; octx.lineWidth=2;
+      octx.strokeRect(mx+Math.max(0,x0)*k, my+Math.max(0,y0)*k, (Math.min(pw,x1)-Math.max(0,x0))*k, (Math.min(ph,y1)-Math.max(0,y0))*k);
+      mini={ x:mx, y:my, w:mw, h:mh, k };
+    }
+  }
+
+  /* ---------- per camera frame ---------- */
+  const trk={ cv:document.createElement('canvas'), ctx:null };
+  let loopOn=false, lastT=-1, frameNo=0, prevState='search', viewInit=false;
+  function frame(now){
+    if(!stream) { loopOn=false; return; }
+    const vw=video.videoWidth, vh=video.videoHeight;
+    if(vw && video.readyState>=2 && video.currentTime!==lastT){
+      lastT=video.currentTime; frameNo++;
+      const dw=Math.min(640,vw), sc=vw/dw, dh=Math.round(vh/sc);
+      if(trk.cv.width!==dw || trk.cv.height!==dh || !trk.ctx){ trk.cv.width=dw; trk.cv.height=dh; trk.ctx=trk.cv.getContext('2d',{ willReadFrequently:true }); }
+      frameW=dw; frameH=dh;
+      trk.ctx.drawImage(video,0,0,dw,dh);
+      const r=lock.step(trk.ctx.getImageData(0,0,dw,dh).data, dw, dh, performance.now());
+      lockState=r.state; lastQuad=r.quad;
+      if(r.H){
+        if(prevState!=='lock' && prevState!=='hold') onLocked();
+        H=r.H; if(r.fresh) camFresh=true; setUi('paper');
+      } else { H=null; setUi('camera'); }
+      prevState=r.state;
+      draw(); updateChip();
+    }
+    schedule();
+  }
+  function schedule(){ if(video.requestVideoFrameCallback) video.requestVideoFrameCallback(()=>frame()); else requestAnimationFrame(frame); }
+  function startLoop(){ if(loopOn) return; loopOn=true; schedule(); }
+  function onLocked(){
+    // a fresh lock: put the sheet in its real size, and on first sight of this sheet ask for the size
+    if(project.paper) lock.setPaper(project.paper.w, project.paper.h);
+    else if(!project.askedPaper){ project.askedPaper=true; openPaperCard(); }
+    if(!project.place) project.place=fitPlace();
+    if(!viewInit){ viewInit=true; fitView(); if(!store.get('hintMove')){ store.set('hintMove', true); toast('Paberil. Pildi asukohta saad muuta: Rohkem → Liiguta pilti.'); } }
+  }
+
+  function setUi(u){
+    if(ui===u) return;
+    ui=u; stage.classList.toggle('paper', u==='paper'); stage.classList.toggle('idle', u==='idle');
+    $('#idle').hidden = u!=='idle';
+    if(u!=='paper'){ syncZoomPill(); }
+  }
+  function updateChip(){
+    let t='Kaamera on väljas', c='muted';
+    if(stream){
+      if(lockState==='lock' || lockState==='hold'){ t = st.moving ? 'Liiguta pilti sõrmedega' : 'Paberil' + (project.paper ? ' · '+fmtSize(project.paper) : ''); c='ok'; }
+      else if(lockState==='lost' || lockState==='weak'){ t='Näita tervet lehte'; c='warn'; }
+      else if(lastQuad){ t='Leht leitud · hoia hetk paigal'; c=''; }
+      else { t='Otsin lehte · terve leht kaadrisse'; c='muted'; }
+    }
+    setChip(t,c);
+  }
+  function setChip(text, cls){ const el=$('#chip'), key=text+'|'+cls; if(el.dataset.key===key) return; el.dataset.key=key; el.firstElementChild.textContent=text; el.className='chip '+(cls||''); }
+  const fmtSize = p => `${+(p.w/10).toFixed(1)} × ${+(p.h/10).toFixed(1)} cm`.replace(/\./g, ',');
+  let toastT=0;
+  function toast(msg){ const t=$('#toast'); t.textContent=msg; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>{ t.hidden=true; }, 3800); }
+
+  /* ---------- gestures ---------- */
+  const pts=new Map(); let last=null, tap=null, lastTap=0;
+  const snap=()=>{ const a=[...pts.values()], n=a.length; if(!n) return null;
+    const cx=a.reduce((s,p)=>s+p.x,0)/n, cy=a.reduce((s,p)=>s+p.y,0)/n;
+    return n>=2 ? { n, cx, cy, p:a.map(q=>[q.x,q.y]), d:Math.hypot(a[1].x-a[0].x,a[1].y-a[0].y) } : { n, cx, cy, p:a.map(q=>[q.x,q.y]) }; };
+  const toPaper=(x,y)=>[(x-view.tx)/view.z, (y-view.ty)/view.z];
+  function simFrom(P1,Q1,P2,Q2){
+    if(!P2) return [1,0,Q1[0]-P1[0], 0,1,Q1[1]-P1[1], 0,0,1];
+    const dx=P2[0]-P1[0], dy=P2[1]-P1[1], ex=Q2[0]-Q1[0], ey=Q2[1]-Q1[1], den=dx*dx+dy*dy; if(den<1e-9) return null;
+    const a=(ex*dx+ey*dy)/den, b=(ey*dx-ex*dy)/den; return [a,-b,Q1[0]-(a*P1[0]-b*P1[1]), b,a,Q1[1]-(b*P1[0]+a*P1[1]), 0,0,1];
+  }
+  function movePicture(K){
+    if(!K) return; const [pw,ph]=paperSize(), p=placeMm(), c=apply(K,p.cx,p.cy), sc=Math.hypot(K[0],K[3]), rot=Math.atan2(K[3],K[0]);
+    const s=Math.max(.05, Math.min(3, project.place.s*sc));
+    project.place={ ...project.place, u:c[0]/pw, v:c[1]/ph, s, rot:(project.place.rot||0)+rot };
+    draw();
+  }
+  stage.addEventListener('pointerdown', e=>{
+    if(e.pointerType==='mouse' && e.button!==0) return;
+    if(mini && ui==='paper' && e.clientX>=mini.x && e.clientX<=mini.x+mini.w && e.clientY>=mini.y && e.clientY<=mini.y+mini.h){
+      const px=(e.clientX-mini.x)/mini.k, py=(e.clientY-mini.y)/mini.k, v=viewport();
+      view.tx=v.W/2-px*view.z; view.ty=(v.top+v.H-v.bottom)/2-py*view.z; clampView(); draw(); return; }
+    tap = pts.size===0 ? { x:e.clientX, y:e.clientY, t:performance.now() } : null;
+    try{ stage.setPointerCapture(e.pointerId); }catch(_){}
+    pts.set(e.pointerId,{ x:e.clientX, y:e.clientY }); last=snap();
+  });
+  stage.addEventListener('pointermove', e=>{
+    if(!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId,{ x:e.clientX, y:e.clientY }); const cur=snap();
+    if(tap && Math.hypot(e.clientX-tap.x, e.clientY-tap.y)>10) tap=null;
+    if(ui==='paper' && last && cur && cur.n===last.n){
+      if(st.moving){
+        const P=last.p.map(q=>toPaper(...q)), Q=cur.p.map(q=>toPaper(...q));
+        movePicture(cur.n>=2 ? simFrom(P[0],Q[0],P[1],Q[1]) : simFrom(P[0],Q[0]));
+      } else {
+        view.tx+=cur.cx-last.cx; view.ty+=cur.cy-last.cy;
+        if(cur.n>=2 && last.d>0){ const f=cur.d/last.d; view.tx=cur.cx-(cur.cx-view.tx)*f; view.ty=cur.cy-(cur.cy-view.ty)*f; view.z*=f; }
+        clampView(); syncZoomPill(); draw();
+      }
+    }
+    last=cur;
+  });
+  const endPointer=e=>{
+    pts.delete(e.pointerId); last=snap();
+    if(tap && e.type==='pointerup' && performance.now()-tap.t<350 && ui==='paper' && !st.moving){
+      const now=performance.now();
+      if(now-lastTap<320){ lastTap=0; doubleTap(e.clientX, e.clientY); }
+      else { lastTap=now; const x=e.clientX, y=e.clientY; setTimeout(()=>{ if(lastTap===now) setClean(!document.body.classList.contains('clean')); }, 330); }
+    }
+    if(!pts.size && st.moving) saveProjectSoon();
+    tap=null;
+  };
+  stage.addEventListener('pointerup', endPointer); stage.addEventListener('pointercancel', endPointer);
+  stage.addEventListener('wheel', e=>{
+    e.preventDefault(); if(ui!=='paper') return;
+    const f=Math.exp(-e.deltaY*(e.ctrlKey?.01:.0015));
+    if(st.moving){
+      const c=toPaper(e.clientX,e.clientY);
+      if(e.shiftKey){ const a=.03*Math.sign(e.deltaY), co=Math.cos(a), si=Math.sin(a); movePicture([co,-si,c[0]-(co*c[0]-si*c[1]), si,co,c[1]-(si*c[0]+co*c[1]), 0,0,1]); }
+      else movePicture([f,0,c[0]-f*c[0], 0,f,c[1]-f*c[1], 0,0,1]);
+      saveProjectSoon(); return;
+    }
+    view.tx=e.clientX-(e.clientX-view.tx)*f; view.ty=e.clientY-(e.clientY-view.ty)*f; view.z*=f; clampView(); syncZoomPill(); draw();
+  }, { passive:false });
+  ['gesturestart','gesturechange'].forEach(t=>document.addEventListener(t, e=>e.preventDefault()));
+  function doubleTap(x,y){
+    if(view.z > view.fitZ*1.4){ fitView(); return; }
+    const f=3; view.tx=x-(x-view.tx)*f; view.ty=y-(y-view.ty)*f; view.z*=f; clampView(); syncZoomPill(); draw();
+  }
+  function syncZoomPill(){ const b=$('#zoomBtn'), z=view.z/view.fitZ, on = ui==='paper' && z>1.1;
+    b.hidden=!on; if(on) b.textContent=z.toFixed(1).replace('.',',')+'× · tervik'; }
+  $('#zoomBtn').onclick=()=>fitView();
+  function setClean(on){ document.body.classList.toggle('clean', on); $('#showUi').hidden=!on; }
+  $('#showUi').onclick=()=>setClean(false);
+
+  /* ---------- peek, opacity, filters, grid, picture ---------- */
+  function peek(on){ if(st.peek===on) return; st.peek=on; $('#peekBtn').classList.toggle('active',on); draw(); }
+  const pk=$('#peekBtn');
+  pk.addEventListener('pointerdown', e=>{ e.preventDefault(); peek(true); try{ pk.setPointerCapture(e.pointerId); }catch(_){} });
+  ['pointerup','pointercancel','lostpointercapture'].forEach(t=>pk.addEventListener(t, ()=>peek(false)));
+  pk.addEventListener('contextmenu', e=>e.preventDefault());
+  pk.addEventListener('keydown', e=>{ if((e.key===' '||e.key==='Enter') && !e.repeat){ e.preventDefault(); peek(true); } });
+  pk.addEventListener('keyup', ()=>peek(false));
+
+  function syncOpacity(){ const v=Math.round(st.opacity*100); $('#opacity').value=v; $('#opacityOut').textContent=v+'%'; }
+  $('#opacity').addEventListener('input', e=>{ st.opacity=e.target.value/100; syncOpacity(); draw(); saveProjectSoon(); });
+  function syncFilter(){
+    document.querySelectorAll('#filterSeg button').forEach(b=>b.setAttribute('aria-checked', b.dataset.filter===st.filter));
+    const pr=$('#paramRow'), p=$('#param');
+    if(st.filter==='tones'){ pr.hidden=false; $('#paramLabel').textContent='Toone'; p.min=2; p.max=8; p.value=st.levels; $('#paramOut').textContent=st.levels; }
+    else if(st.filter==='edge'){ pr.hidden=false; $('#paramLabel').textContent='Tundlikkus'; p.min=1; p.max=100; p.value=st.edge; $('#paramOut').textContent=st.edge; }
+    else pr.hidden=true;
+  }
+  document.querySelectorAll('#filterSeg button').forEach(b=>b.onclick=()=>{ st.filter=b.dataset.filter; syncFilter(); scheduleRender(); saveProjectSoon(); });
+  $('#param').addEventListener('input', e=>{ const v=+e.target.value; if(st.filter==='tones') st.levels=v; else st.edge=v; $('#paramOut').textContent=v; scheduleRender(); saveProjectSoon(); });
+  function syncGrid(){ $('#gridBtn').setAttribute('aria-pressed', st.grid); $('#gridOut').textContent = project.paper ? st.gridCm+' cm' : '10 rida'; }
+  $('#gridBtn').onclick=()=>{ st.grid=!st.grid; syncGrid(); draw(); saveProjectSoon(); };
+  const setGrid=n=>{ st.gridCm=Math.max(1,Math.min(20,n)); st.grid=true; syncGrid(); draw(); saveProjectSoon(); };
+  $('#gridMinus').onclick=()=>setGrid(st.gridCm-1); $('#gridPlus').onclick=()=>setGrid(st.gridCm+1);
+  $('#mirrorBtn').onclick=()=>{ if(!project.place) project.place=fitPlace(); project.place.flip=-(project.place.flip||1); $('#mirrorBtn').setAttribute('aria-pressed', project.place.flip<0); draw(); saveProjectSoon(); };
+  $('#rotBtn').onclick=()=>{ if(!project.place) project.place=fitPlace(); project.place.rot=(project.place.rot||0)+Math.PI/2; draw(); saveProjectSoon(); };
+  $('#fitBtn').onclick=()=>{ closeMenu(); const f=fitPlace(); project.place={ ...f, flip:project.place?.flip||1 }; draw(); saveProjectSoon(); toast('Pilt on lehe keskel.'); };
+  function setMoving(on){ st.moving=on; document.body.classList.toggle('moving', on); $('#moveBtn').textContent = on ? 'Lõpeta liigutamine' : 'Liiguta pilti'; updateChip(); draw(); }
+  $('#moveBtn').onclick=()=>{ closeMenu(); setMoving(!st.moving); if(st.moving) toast('Lohista, suumi ja pööra pilti paberil. Vajuta „Valmis“, kui pilt on paigas.'); };
+  $('#doneBtn').onclick=()=>{ setMoving(false); saveProjectSoon(); };
+  $('#relockBtn').onclick=()=>{ closeMenu(); lock.reset(); H=null; lockState='search'; lastQuad=null; prevState='search'; setUi('camera'); updateChip(); toast('Hoia terve leht kaadris, otsin uuesti.'); };
+
+  /* ---------- paper size ---------- */
+  function openPaperCard(){
+    const a=lock.aspect || (project.paper ? project.paper.w/project.paper.h : .75), land=a>1, r=land?1/a:a;
+    const list=PAPERS.map(([w,h,n])=>({ w, h, n, d:Math.abs(w/h-r)/r })).sort((x,y)=>x.d-y.d).slice(0,6);
+    const box=$('#sizeList'); box.textContent='';
+    list.forEach((p,i)=>{ const b=document.createElement('button'); b.className='btn'+(i===0?' best':'');
+      const W=land?p.h:p.w, Hh=land?p.w:p.h; b.innerHTML=`<span></span><small></small>`;
+      b.firstChild.textContent=p.n.includes('×') ? fmtSize({ w:W*10, h:Hh*10 }) : p.n+(land?' rõhtne':'');
+      b.lastChild.textContent = p.n.includes('×') ? (p.d<.02 ? 'sobib kujuga' : '') : fmtSize({ w:W*10, h:Hh*10 });
+      b.onclick=()=>choosePaper(W*10, Hh*10); box.appendChild(b); });
+    $('#ppNote').textContent = lock.aspect ? `Leht on pildi järgi kujuga ${land?'1 : '+(1/r).toFixed(2).replace('.',','):'1 : '+(1/a).toFixed(2).replace('.',',')} (laius : kõrgus). Need suurused on kõige lähemad. Õige suurus hoiab pildi proportsioonid paberil täpsed.` : 'Vali paberi suurus.';
+    $('#cw').value = project.paper ? project.paper.w/10 : ''; $('#ch').value = project.paper ? project.paper.h/10 : '';
+    $('#paperCard').hidden=false;
+  }
+  function choosePaper(wmm, hmm){
+    project.paper={ w:wmm, h:hmm }; project.askedPaper=true; lock.setPaper(wmm, hmm);
+    $('#paperCard').hidden=true; syncPaperBtn(); syncGrid(); fitView(); updateChip(); saveProjectSoon();
+    toast('Paber: '+fmtSize(project.paper));
+  }
+  $('#ppCustom').onclick=()=>{ const w=parseFloat(($('#cw').value||'').replace(',','.')), h=parseFloat(($('#ch').value||'').replace(',','.'));
+    if(!(w>5 && h>5 && w<300 && h<300)){ toast('Sisesta laius ja kõrgus sentimeetrites, näiteks 50 ja 65.'); return; }
+    choosePaper(w*10, h*10); };
+  $('#ppSkip').onclick=()=>{ $('#paperCard').hidden=true; project.askedPaper=true; saveProjectSoon(); };
+  function syncPaperBtn(){ $('#paperBtn').textContent = 'Suurus: '+(project.paper ? fmtSize(project.paper) : 'pole valitud'); }
+  $('#paperBtn').onclick=()=>{ closeMenu(); openPaperCard(); };
+
+  /* ---------- camera ---------- */
+  async function wake(){ try{ wakeLock=await navigator.wakeLock?.request('screen'); }catch(_){} }
+  document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible' && stream) wake(); });
+  const COMBINED=/dual|triple|kahe|kolme|topelt|kolmik|doppel|dreifach|double/i, FRONT=/front|esi|ees|vorder|avant/i, ULTRA=/ultra|ülilai|lainurk/i, TELE=/tele/i;
+  let starting=false;
+  function stopCamera(){ stream?.getTracks().forEach(t=>t.stop()); stream=null; video.srcObject=null; lock.reset(); H=null; setUi('idle'); updateChip(); }
+  async function startCamera(){
+    if(stream || starting) return; starting=true; setChip('Kaamera käivitub…','muted');
+    try{
+      if(!navigator.mediaDevices?.getUserMedia) throw Object.assign(new Error('no camera api'), { name:'Unsupported' });
+      const want=camId || store.get('camId'), size={ width:{ ideal:3840 }, height:{ ideal:2160 } };
+      let s;
+      try{ s=await navigator.mediaDevices.getUserMedia({ audio:false, video: want ? { deviceId:{ exact:want }, ...size } : { facingMode:{ ideal:'environment' }, ...size } }); }
+      catch(e){ if(!want) throw e; store.del('camId'); camId=null; s=await navigator.mediaDevices.getUserMedia({ audio:false, video:{ facingMode:{ ideal:'environment' }, ...size } }); }
+      stream=s; video.srcObject=stream; await video.play().catch(()=>{});
+      setUi('camera'); wake(); startLoop(); listCameras(true);
+    }catch(err){
+      stream=null; setUi('idle');
+      const n=err && err.name;
+      let msg;
+      if(inFrame && (n==='NotAllowedError' || n==='SecurityError' || n==='Unsupported'))
+        msg='Claude\'i vestluse sees kaamerat kasutada ei saa. Ava Lehevaade telefonis aadressil robitaul.github.io/kalkeerkaamera/lehevaade.html.';
+      else if(!window.isSecureContext) msg='Brauser lubab kaamerat ainult HTTPS-aadressil.';
+      else if(n==='NotAllowedError') msg='Kaamera kasutamine on keelatud. Luba kaamera brauseri seadetes (iPhone: Seaded → Rakendused → Safari → Kaamera) ja laadi leht uuesti.';
+      else if(n==='NotFoundError' || n==='OverconstrainedError') msg='Kaamerat ei leitud.';
+      else msg='Kaamerat ei saanud käivitada. Sulge teised rakendused, mis kaamerat kasutavad, ja proovi uuesti.';
+      $('#noticeText').textContent=msg; $('#notice').hidden=false;
+    }finally{ starting=false; updateChip(); }
+  }
+  $('#noticeOk').onclick=()=>{ $('#notice').hidden=true; };
+  async function listCameras(autoPick){
+    let devs=[]; try{ devs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput'); }catch(_){}
+    const cur=stream?.getVideoTracks?.()[0], curId=cur?.getSettings?.().deviceId, curLabel=cur?.label||'';
+    if(autoPick && !store.get('camId') && COMBINED.test(curLabel)){
+      const single=devs.find(d=>d.label && !COMBINED.test(d.label) && !FRONT.test(d.label) && !ULTRA.test(d.label) && !TELE.test(d.label));
+      if(single && single.deviceId && single.deviceId!==curId){ camId=single.deviceId; stopCamera(); startCamera(); return; }
+    }
+    const box=$('#camList'); box.textContent='';
+    devs.filter(d=>d.label).forEach(d=>{ const b=document.createElement('button'); b.className='btn'; b.textContent=d.label; b.title=d.label;
+      b.setAttribute('aria-pressed', d.deviceId===curId);
+      b.onclick=()=>{ camId=d.deviceId; store.set('camId', d.deviceId); closeMenu(); stopCamera(); startCamera(); }; box.appendChild(b); });
+    $('#camBox').hidden=!box.childElementCount;
+  }
+
+  /* ---------- projects (shared with Kalkeerkaamera) ---------- */
+  function thumbFrom(c){ const t=document.createElement('canvas'), k=96/Math.max(c.width,c.height); t.width=Math.round(c.width*k); t.height=Math.round(c.height*k); t.getContext('2d').drawImage(c,0,0,t.width,t.height); return t.toDataURL('image/jpeg',.7); }
+  function loadImage(blob){ return new Promise(res=>{ const url=URL.createObjectURL(blob), img=new Image(); img.onload=()=>res(img); img.onerror=()=>{ URL.revokeObjectURL(url); res(null); }; img.src=url; }); }
+  const blobBytes=b=>b.arrayBuffer ? b.arrayBuffer() : new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>rej(r.error); r.readAsArrayBuffer(b); });
+  const newKey=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+  let projT=0;
+  const SETTINGS=['opacity','filter','levels','edge','grid','gridCm'];
+  function saveProjectSoon(){
+    clearTimeout(projT);
+    projT=setTimeout(async ()=>{
+      const settings={}; for(const k of SETTINGS) settings[k]=st[k];
+      await idb.set('lv:'+project.id, { paper:project.paper, askedPaper:!!project.askedPaper, place:project.place, settings });
+      const m=projects.find(p=>p.id===project.id); if(m){ m.used=Date.now(); projects.sort((a,b)=>b.used-a.used); idb.set('projects', projects); }
+    }, 400);
+  }
+  function setImage(img, thumb){ src=img; $('#thumb').style.backgroundImage=`url("${thumb}")`; renderRef(); }
+  async function openProject(id){
+    const rec=(await idb.get('lv:'+id)) || {};
+    let img, thumb;
+    if(id==='sample'){ img=makeSample(); thumb=thumbFrom(img); }
+    else { const b=await idb.get('img:'+id); if(!b) return false;
+      img=await loadImage(b.blob || new Blob([b.bytes], { type:b.type||'image/jpeg' })); if(!img) return false;
+      thumb=projects.find(p=>p.id===id)?.thumb || thumbFrom(img); }
+    project={ id, paper:rec.paper||null, askedPaper:!!rec.askedPaper, place:rec.place||null };
+    if(rec.settings) for(const k of SETTINGS) if(k in rec.settings) st[k]=rec.settings[k];
+    syncOpacity(); syncFilter(); syncGrid(); syncPaperBtn(); $('#mirrorBtn').setAttribute('aria-pressed', (project.place?.flip||1)<0);
+    setImage(img, thumb);
+    if(project.paper && lock.corners) lock.setPaper(project.paper.w, project.paper.h);
+    if(!project.place) project.place=fitPlace();
+    store.set('current', id);
+    const m=projects.find(p=>p.id===id); if(m){ m.used=Date.now(); projects.sort((a,b)=>b.used-a.used); idb.set('projects', projects); }
+    if(ui==='paper') fitView();
+    if(lock.corners && !project.paper && !project.askedPaper && ui==='paper'){ project.askedPaper=true; openPaperCard(); }
+    return true;
+  }
+  const cleanName=n=>(n||'').replace(/\.[a-z0-9]{2,5}$/i,'').replace(/[_-]+/g,' ').trim().slice(0,40);
+  async function newProject(file){
+    const img=await loadImage(file); if(!img){ toast('Seda pilti ei saanud avada. Proovi JPG- või PNG-faili.'); return; }
+    const id=newKey(), thumb=thumbFrom(img), name=cleanName(file.name) || ('Pilt '+new Date().toLocaleDateString('et-EE',{ day:'numeric', month:'short' }));
+    let ok=false; try{ ok=await idb.set('img:'+id, { bytes:await blobBytes(file), type:file.type||'image/jpeg' }); }catch(_){}
+    const paper=project.paper;                       // most likely the same sheet as before
+    project={ id, paper, askedPaper:!!paper, place:null }; src=img; project.place=fitPlace();
+    setImage(img, thumb); closeProjects();
+    if(ok){ projects.unshift({ id, name, thumb, used:Date.now() }); await idb.set('projects', projects); store.set('current', id); saveProjectSoon(); toast('Uus projekt: '+name); }
+    else toast('Pilti ei saanud seadmesse salvestada, aga saad sellega praegu töötada.');
+  }
+  async function deleteProject(id){
+    projects=projects.filter(p=>p.id!==id); await idb.set('projects', projects); await idb.del('lv:'+id); await idb.del('p:'+id); await idb.del('img:'+id);
+    if(project.id===id){ const next=projects[0]; if(!(next && await openProject(next.id))) await openProject('sample'); }
+    renderProjects();
+  }
+  function fmtWhen(t){ const d=new Date(t), now=new Date(), time=d.toLocaleTimeString('et-EE',{ hour:'2-digit', minute:'2-digit' });
+    return d.toDateString()===now.toDateString() ? 'täna '+time : d.toLocaleDateString('et-EE',{ day:'numeric', month:'short' })+' '+time; }
+  const ICON_MORE='<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>';
+  function renderProjects(){
+    const ul=$('#plist'); ul.textContent='';
+    if(!projects.length){ const p=document.createElement('p'); p.className='pempty'; p.textContent='Sul pole veel projekte. Vajuta „Uus pilt“ ja vali foto, mida tahad joonistada.'; ul.appendChild(p); return; }
+    for(const pr of projects){
+      const li=document.createElement('li'); li.className='prow'+(pr.id===project.id?' current':'');
+      const main=document.createElement('button'); main.className='pmain';
+      const th=document.createElement('span'); th.className='pthumb'; th.style.backgroundImage=`url("${pr.thumb}")`;
+      const tx=document.createElement('span'); tx.className='ptext'; const b=document.createElement('b'); b.textContent=pr.name;
+      const sm=document.createElement('small'); sm.textContent='Viimati '+fmtWhen(pr.used); if(pr.id===project.id){ const em=document.createElement('em'); em.textContent=' · avatud'; sm.appendChild(em); }
+      tx.append(b,sm); main.append(th,tx);
+      main.onclick=async ()=>{ if(pr.id!==project.id){ const ok=await openProject(pr.id); if(!ok) toast('Projekti ei saanud avada.'); } closeProjects(); };
+      const more=document.createElement('button'); more.className='pmore'; more.setAttribute('aria-label','Valikud: '+pr.name); more.innerHTML=ICON_MORE;
+      const extra=document.createElement('div'); extra.className='pextra'; extra.hidden=true;
+      const showActions=()=>{ extra.textContent='';
+        const rn=document.createElement('button'); rn.className='btn'; rn.textContent='Nimeta ümber';
+        const del=document.createElement('button'); del.className='btn danger'; del.textContent='Kustuta';
+        rn.onclick=()=>{ extra.textContent=''; const inp=document.createElement('input'); inp.value=pr.name; inp.maxLength=40; inp.id='rename-'+pr.id; inp.setAttribute('aria-label','Projekti nimi');
+          const ok=document.createElement('button'); ok.className='btn primary'; ok.textContent='Salvesta';
+          const go=async ()=>{ const nm=inp.value.trim().slice(0,40); if(nm){ pr.name=nm; await idb.set('projects', projects); } renderProjects(); };
+          ok.onclick=go; inp.addEventListener('keydown', e=>{ if(e.key==='Enter') go(); if(e.key==='Escape') renderProjects(); }); extra.append(inp, ok); inp.focus(); inp.select(); };
+        del.onclick=()=>{ extra.textContent=''; const q=document.createElement('p'); q.textContent=`Kustutada „${pr.name}“? Pilt kaob ka Kalkeerkaamerast.`;
+          const yes=document.createElement('button'); yes.className='btn danger'; yes.textContent='Kustuta jäädavalt';
+          const no=document.createElement('button'); no.className='btn'; no.textContent='Tühista'; yes.onclick=()=>deleteProject(pr.id); no.onclick=showActions; extra.append(q,yes,no); };
+        extra.append(rn, del); };
+      more.onclick=()=>{ extra.hidden=!extra.hidden; if(!extra.hidden) showActions(); };
+      li.append(main, more, extra); ul.appendChild(li);
+    }
+  }
+  function openProjects(){ renderProjects(); $('#projects').hidden=false; }
+  function closeProjects(){ $('#projects').hidden=true; }
+  $('#projBtn').onclick=openProjects; $('#projMenuBtn').onclick=()=>{ closeMenu(); openProjects(); };
+  $('#newProjBtn').onclick=()=>$('#file').click(); $('#projectsClose').onclick=closeProjects;
+  $('#projects').addEventListener('click', e=>{ if(e.target.id==='projects') closeProjects(); });
+  $('#file').addEventListener('change', e=>{ const f=e.target.files[0]; e.target.value=''; if(f) newProject(f); });
+
+  /* ---------- menu, help ---------- */
+  function openMenu(){ $('#menu').hidden=false; if(stream) listCameras(false); else $('#camBox').hidden=true; }
+  function closeMenu(){ $('#menu').hidden=true; }
+  $('#moreBtn').onclick=openMenu; $('#menuClose').onclick=closeMenu;
+  $('#menu').addEventListener('click', e=>{ if(e.target.id==='menu') closeMenu(); });
+  $('#paperCard').addEventListener('click', e=>{ if(e.target.id==='paperCard') $('#paperCard').hidden=true; });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeMenu(); closeProjects(); $('#paperCard').hidden=true; } });
+  $('#helpBtn').onclick=()=>{ closeMenu(); $('#onboard').hidden=false; };
+  $('#obGo').onclick=()=>{ $('#onboard').hidden=true; store.set('onboarded', true); startCamera(); };
+  if(inFrame) $('#links').hidden=true;
+  window.addEventListener('resize', ()=>{ if(ui==='paper'){ clampView(); syncZoomPill(); } draw(); });
+
+  // for automated checks only (?debug in the address): read-only view of the internals
+  if(/[?&]debug\b/.test(location.search)) window.__lv = { get view(){ return { ...view }; }, get H(){ return H && H.slice(); }, get corners(){ return lock.corners; },
+    get state(){ return lockState; }, get frame(){ return [frameW, frameH]; }, get paper(){ return project.paper; }, frameImage(){ return trk.cv.toDataURL('image/png'); },
+    get place(){ return project.place && { ...project.place }; }, get peek(){ return st.peek; }, get projectId(){ return project.id; } };
+
+  /* ---------- start ---------- */
+  (async function boot(){
+    syncOpacity(); syncFilter(); syncGrid(); syncPaperBtn(); setUi('idle'); updateChip();
+    if(!glOK) toast('See brauser ei toeta WebGL-i, paberivaadet ei saa näidata.');
+    projects=(await idb.get('projects')) || [];
+    const cur=store.get('current');
+    if(!(cur && projects.some(p=>p.id===cur) && await openProject(cur))){ if(!(projects[0] && await openProject(projects[0].id))) await openProject('sample'); }
+    if(!store.get('onboarded')) $('#onboard').hidden=false; else startCamera();
+  })();
+
+})();
+</script>
+</body></html>
