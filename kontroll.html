@@ -1,0 +1,1240 @@
+<!doctype html>
+<html lang="et"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Kontroll"><meta name="theme-color" content="#ecedef"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style></head><body>
+<title>Joonistuse kontroll</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,500;1,400&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: töölaud nagu toonikaardil — juhtpaneel vasakul, pilt paremal, sammud üleval; telefonis pilt peal */
+:root {
+  --paper: #ecedef;
+  --sheet: #f7f7f8;
+  --ink: #1c1e21;
+  --muted: #5d6168;
+  --line: #cfd2d7;
+  --accent: #2f4a62;
+  --accent-ink: #ffffff;
+  --tint: rgba(47, 74, 98, 0.09);
+  --warm: #cd2d28;
+  --cool: #2864dc;
+  --display: "Spectral", Georgia, "Times New Roman", serif;
+  --body: "Work Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #16171a; --sheet: #1f2024; --ink: #e5e5e3; --muted: #9a9ea6;
+    --line: #34363c; --accent: #8fb0cc; --accent-ink: #10161c; --tint: rgba(143, 176, 204, 0.12); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #16171a; --sheet: #1f2024; --ink: #e5e5e3; --muted: #9a9ea6;
+  --line: #34363c; --accent: #8fb0cc; --accent-ink: #10161c; --tint: rgba(143, 176, 204, 0.12); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+.empty { display: grid; gap: 14px; justify-items: start; max-width: 46ch; padding: 24px 8px; }
+.empty h3 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 24px; line-height: 1.2; }
+.empty ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; color: var(--muted); }
+.empty ol b { color: var(--ink); font-weight: 600; }
+.empty .done { color: var(--ink); }
+body {
+  background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px;
+}
+.wrap { max-width: 1360px; margin: 0 auto; display: grid; gap: 18px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; border-bottom: 1px solid var(--line); padding-bottom: 14px; }
+h1 { font-family: var(--display); font-weight: 500; font-size: clamp(26px, 4vw, 38px); line-height: 1.1; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h1 em { font-style: italic; font-weight: 400; color: var(--muted); }
+.lede { margin: 0; color: var(--muted); max-width: 62ch; }
+
+.stepper { display: flex; flex-wrap: wrap; gap: 6px; }
+.stepper button {
+  display: flex; align-items: center; gap: 8px; font: 500 14px/1 var(--body); color: var(--ink);
+  background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px 7px 7px; cursor: pointer;
+}
+.stepper button b { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); font: 600 12px var(--mono); }
+.stepper button[aria-current="step"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.stepper button[aria-current="step"] b { border-color: var(--paper); }
+
+.main { display: grid; grid-template-columns: 310px minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 820px) { .main { grid-template-columns: minmax(0, 1fr); } .stage { order: -1; } }
+
+.panel { display: grid; gap: 20px; }
+.group { display: grid; gap: 12px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.group:last-child { border-bottom: 0; }
+.group h2 { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.ctl { display: grid; gap: 4px; }
+.ctl .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.ctl label, .lbl { font-weight: 500; font-size: 14px; }
+.ctl output { font-family: var(--mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.note { color: var(--muted); font-size: 13px; line-height: 1.45; margin: 0; }
+.note.sample { color: var(--ink); background: var(--tint); padding: 8px 10px; border-radius: 5px; }
+input[type=range] { width: 100%; accent-color: var(--accent); margin: 2px 0; }
+.ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.num { display: grid; gap: 4px; font-size: 13px; font-weight: 500; }
+.num input, select { font: 14px var(--mono); padding: 7px 8px; border: 1px solid var(--line); border-radius: 5px; background: var(--sheet); color: var(--ink); width: 100%; }
+select { font-family: var(--body); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; font: 500 14px/1 var(--body);
+  padding: 11px 14px; border-radius: 6px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); cursor: pointer;
+  user-select: none; -webkit-user-select: none;
+}
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn.small { padding: 8px 10px; font-size: 13px; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn:focus-visible, input:focus-visible, select:focus-visible, .seg button:focus-visible, .modes button:focus-visible, .stepper button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.file { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+.src { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 10px; align-items: center; border-radius: 6px; }
+.src.drag { outline: 2px dashed var(--accent); outline-offset: 3px; }
+.src canvas { width: 52px; height: 52px; object-fit: contain; background: var(--sheet); border: 1px solid var(--line); border-radius: 4px; display: block; }
+.src .t { min-width: 0; }
+.src .t b { display: block; font-size: 14px; font-weight: 500; }
+.src .t span { display: block; font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { font: 500 13px/1.2 var(--body); padding: 9px 4px; border: 0; background: transparent; color: var(--ink); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.check { display: flex; gap: 8px; align-items: center; font-size: 14px; cursor: pointer; }
+.check input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; flex: none; }
+.checks { display: grid; gap: 8px; }
+
+.modes { display: grid; gap: 6px; }
+.modes button { text-align: left; display: grid; gap: 1px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: var(--ink); cursor: pointer; font: inherit; }
+.modes button b { font-size: 14px; font-weight: 600; }
+.modes button span { font-size: 12.5px; color: var(--muted); line-height: 1.35; }
+.modes button[aria-pressed="true"] { border-color: var(--accent); background: var(--tint); box-shadow: inset 3px 0 0 var(--accent); }
+
+.stage { display: grid; gap: 12px; min-width: 0; }
+.frame { background: var(--sheet); border: 1px solid var(--line); border-radius: 4px; padding: 14px; display: grid; place-items: center; min-height: 300px; position: relative; overflow: hidden; }
+.frame.drag { outline: 2px dashed var(--accent); outline-offset: -8px; }
+.pic { position: relative; display: inline-block; max-width: 100%; line-height: 0; touch-action: none; user-select: none; -webkit-user-select: none; }
+.pic canvas.view { display: block; max-width: 100%; max-height: 76vh; width: auto; height: auto; box-shadow: 0 1px 2px rgba(0,0,0,.12), 0 6px 20px rgba(0,0,0,.08); }
+.pic svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.pic svg polygon { fill: rgba(63, 143, 214, 0.10); stroke: #3f8fd6; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.pic svg line { stroke: #3f8fd6; stroke-width: 5; vector-effect: non-scaling-stroke; }
+.handle { position: absolute; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; border: 2px solid #ffffff; background: rgba(63, 143, 214, 0.35); box-shadow: 0 0 0 1.5px #1d4f7c, 0 2px 6px rgba(0,0,0,.35); cursor: grab; touch-action: none; }
+.handle::after { content: ""; position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 0 1px #1d4f7c; }
+.handle.m { background: rgba(214, 72, 52, 0.25); box-shadow: 0 0 0 1.5px #7c231b, 0 2px 6px rgba(0,0,0,.35); }
+.handle.m span { position: absolute; left: 22px; top: -14px; font: 600 13px/1 var(--mono); color: #ffffff; background: #7c231b; padding: 3px 5px; border-radius: 3px; }
+.tag { position: absolute; font: 600 12px/1 var(--body); color: #ffffff; background: rgba(29, 79, 124, 0.9); padding: 4px 7px; border-radius: 3px; transform: translate(-50%, -150%); white-space: nowrap; pointer-events: none; line-height: 1; }
+#loupe { position: absolute; width: 140px; height: 140px; border-radius: 50%; border: 2px solid #ffffff; box-shadow: 0 0 0 1px #1d4f7c, 0 6px 18px rgba(0,0,0,.35); pointer-events: none; z-index: 5; background: #808080; }
+
+.pair-view { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; align-items: start; }
+.pair-view figure { margin: 0; display: grid; gap: 6px; justify-items: center; min-width: 0; }
+.pair-view figcaption { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.pair-view .pic canvas.view { max-height: 66vh; }
+
+.cmp-wrap { position: relative; display: inline-block; max-width: 100%; line-height: 0; }
+#cmpCanvas { display: block; max-width: 100%; max-height: 76vh; width: auto; height: auto; box-shadow: 0 1px 2px rgba(0,0,0,.12), 0 6px 20px rgba(0,0,0,.08); touch-action: none; }
+.badge { position: absolute; top: 10px; font: 600 12px/1 var(--body); color: #ffffff; background: rgba(28, 30, 33, 0.78); padding: 5px 8px; border-radius: 3px; pointer-events: none; }
+.badge.l { left: 10px; } .badge.r { right: 10px; }
+
+.status { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); font: 12.5px var(--mono); background: var(--ink); color: var(--paper); padding: 5px 10px; border-radius: 4px; line-height: 1.4; z-index: 6; text-align: center; max-width: calc(100% - 40px); }
+.info { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; font-size: 13.5px; color: var(--muted); }
+.info p { margin: 0; max-width: 70ch; }
+.key { display: inline-flex; align-items: center; gap: 7px; color: var(--ink); font-size: 13.5px; }
+.key i { width: 16px; height: 16px; border-radius: 3px; display: inline-block; }
+.key i.warm { background: var(--warm); } .key i.cool { background: var(--cool); }
+.key i.lw { height: 3px; background: var(--warm); border-radius: 0; } .key i.lc { height: 3px; background: var(--cool); border-radius: 0; }
+
+@media (max-width: 560px) { .pair-view { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Joonistuse <em>kontroll</em></h1>
+    <p class="lede">Pildista oma joonistus ja võrdle seda originaaliga. Tööriist ajab foto sirgeks, sobitab selle originaali peale ja näitab, kus proportsioonid või toonid lahku lähevad.</p>
+  </header>
+
+  <nav class="stepper" aria-label="Sammud">
+    <button type="button" data-step="corners"><b>1</b>Paberi nurgad</button>
+    <button type="button" data-step="align"><b>2</b>Joondus</button>
+    <button type="button" data-step="compare" aria-current="step"><b>3</b>Võrdlus</button>
+  </nav>
+
+  <div class="main">
+    <aside class="panel">
+      <div class="group">
+        <h2>Pildid</h2>
+        <div class="src" id="srcRef">
+          <canvas id="thumbRef" width="104" height="104"></canvas>
+          <div class="t"><b>Originaal</b><span id="nameRef">näidisfoto</span></div>
+          <label class="btn ghost small" for="fileRef">Vali…</label>
+          <input class="file" id="fileRef" type="file" accept="image/*">
+        </div>
+        <div class="src" id="srcDrw">
+          <canvas id="thumbDrw" width="104" height="104"></canvas>
+          <div class="t"><b>Joonistuse foto</b><span id="nameDrw">näidis</span></div>
+          <label class="btn ghost small" for="fileDrw">Vali…</label>
+          <input class="file" id="fileDrw" type="file" accept="image/*">
+        </div>
+        <p class="note sample" id="sampleNote">Praegu on laetud näidis: simuleeritud söejoonistus, millesse on tahtlikult tehtud vead. Paremal silm on liiga kõrgel, suu liiga madalal, lõug nihkes, põsk liiga hele ja juuksed liiga tumedad.</p>
+        <p class="note">Originaaliks sobib foto või toonikaardist salvestatud pilt. Pildista joonistust otse eest ja ühtlases valguses, nii et terve paber jääb kaadrisse.</p>
+      </div>
+
+      <!-- samm 1 -->
+      <div class="group" data-panel="corners" hidden>
+        <h2>Paberi nurgad</h2>
+        <p class="note">Lohista neli punkti paberi nurkadesse. Suurendusklaas näitab täpset kohta. Sinine paks joon tähistab pildi ülemist serva.</p>
+        <div class="ctl">
+          <span class="lbl">Nurgad märgivad</span>
+          <div class="seg" role="group" aria-label="Nurgad märgivad">
+            <button type="button" data-frame="paper" aria-pressed="true">Paberi servi</button>
+            <button type="button" data-frame="image" aria-pressed="false">Pildi ala</button>
+          </div>
+          <p class="note" id="frameNote"></p>
+        </div>
+        <div class="ctl" id="paperCtl">
+          <label for="paperSel">Paberi suurus</label>
+          <select id="paperSel">
+            <option value="21x29.7">A4 · 21 × 29,7 cm</option>
+            <option value="29.7x42">A3 · 29,7 × 42 cm</option>
+            <option value="42x59.4">A2 · 42 × 59,4 cm</option>
+            <option value="50x65">50 × 65 cm</option>
+            <option value="50x70" selected>50 × 70 cm</option>
+            <option value="70x100">70 × 100 cm</option>
+            <option value="custom">Muu suurus</option>
+          </select>
+          <div class="pair">
+            <label class="num" for="paperW">Laius, cm<input id="paperW" type="number" min="5" max="300" step="0.1" value="50"></label>
+            <label class="num" for="paperH">Kõrgus, cm<input id="paperH" type="number" min="5" max="300" step="0.1" value="70"></label>
+          </div>
+        </div>
+        <label class="check"><input id="evenLight" type="checkbox" checked> Ühtlusta valgus (eemaldab varjud ja heledusvahe)</label>
+        <div class="btns">
+          <button class="btn ghost small" id="detect" type="button">Leia paber automaatselt</button>
+          <button class="btn ghost small" id="rotate" type="button">Pööra 90°</button>
+        </div>
+        <button class="btn" type="button" data-goto="align">Edasi: joondus</button>
+      </div>
+
+      <!-- samm 2 -->
+      <div class="group" data-panel="align" hidden>
+        <h2>Joondus</h2>
+        <p class="note">Joonistus sobitatakse originaali peale automaatselt. Kui tulemus pole täpne, lohista punktid 1 ja 2 mõlemal pildil samadesse kohtadesse, näiteks kummagi silma keskele.</p>
+        <p class="note">Vali punktideks kohad, mis on joonistusel kindlasti õiged. Siis paistavad kõik teised vead selgelt välja.</p>
+        <div class="btns">
+          <button class="btn ghost small" id="autoAlign" type="button">Joonda automaatselt</button>
+        </div>
+        <button class="btn" type="button" data-goto="compare">Edasi: võrdlus</button>
+      </div>
+
+      <!-- samm 3 -->
+      <div class="group" data-panel="compare">
+        <h2>Võrdlusviis</h2>
+        <div class="modes" role="group" aria-label="Võrdlusviis">
+          <button type="button" data-mode="diff" aria-pressed="true"><b>Erinevused</b><span>Punane: liiga tume. Sinine: liiga hele.</span></button>
+          <button type="button" data-mode="contours" aria-pressed="false"><b>Kontuurid</b><span>Originaali ja sinu toonipiirid kohakuti</span></button>
+          <button type="button" data-mode="split" aria-pressed="false"><b>Kardin</b><span>Lohista piiri üle pildi</span></button>
+          <button type="button" data-mode="blink" aria-pressed="false"><b>Vilgutus</b><span>Pildid vahelduvad, nihked hüppavad silma</span></button>
+          <button type="button" data-mode="overlay" aria-pressed="false"><b>Läbipaistvus</b><span>Originaal ja joonistus üksteise peal</span></button>
+        </div>
+
+        <div class="ctl" data-for="diff">
+          <div class="row"><label for="sens">Tundlikkus</label><output id="sensV"></output></div>
+          <input id="sens" type="range" min="0" max="100" step="5" value="70">
+          <div class="row"><label for="squint">Detailide hägustus</label><output id="squintV"></output></div>
+          <input id="squint" type="range" min="0" max="100" step="5" value="35">
+          <p class="note">Suurem hägustus näitab ainult suuri toonivigu. Väiksem näitab ka pisidetaile.</p>
+        </div>
+        <div class="ctl" data-for="contours" hidden>
+          <div class="row"><label for="clevels">Toonipiire</label><output id="clevelsV"></output></div>
+          <input id="clevels" type="range" min="2" max="6" step="1" value="3">
+          <div class="checks">
+            <label class="check"><input id="cRef" type="checkbox" checked> Originaali kontuurid (punane)</label>
+            <label class="check"><input id="cDrw" type="checkbox" checked> Sinu kontuurid (sinine)</label>
+          </div>
+          <span class="lbl">Taustaks</span>
+          <div class="seg" role="group" aria-label="Taustaks">
+            <button type="button" data-cbase="drw" aria-pressed="true">Joonistus</button>
+            <button type="button" data-cbase="ref" aria-pressed="false">Originaal</button>
+          </div>
+        </div>
+        <div class="ctl" data-for="split" hidden>
+          <div class="row"><label for="splitX">Kardina asukoht</label><output id="splitXV"></output></div>
+          <input id="splitX" type="range" min="0" max="100" step="1" value="50">
+          <p class="note">Saad piiri ka otse pildil lohistada.</p>
+        </div>
+        <div class="ctl" data-for="blink" hidden>
+          <div class="row"><label for="blinkMs">Vahetuse kiirus</label><output id="blinkMsV"></output></div>
+          <input id="blinkMs" type="range" min="200" max="2000" step="100" value="700">
+          <div class="btns">
+            <button class="btn ghost small" id="blinkPlay" type="button">Peata</button>
+            <button class="btn ghost small" id="blinkStep" type="button">Vaheta käsitsi</button>
+          </div>
+        </div>
+        <div class="ctl" data-for="overlay" hidden>
+          <div class="row"><label for="mix">Segu</label><output id="mixV"></output></div>
+          <input id="mix" type="range" min="0" max="100" step="1" value="50">
+          <div class="ends"><span>joonistus</span><span>originaal</span></div>
+        </div>
+      </div>
+
+      <div class="group" data-panel="compare">
+        <h2>Vaade</h2>
+        <div class="checks">
+          <label class="check"><input id="vMirror" type="checkbox"> Peegelda</label>
+          <label class="check"><input id="vFlip" type="checkbox"> Pea peale</label>
+          <label class="check"><input id="vSquint" type="checkbox"> Kissita silmi (hägustab kõik)</label>
+        </div>
+        <p class="note">Peegeldatud või tagurpidi pildil näed vigu, millega silm on juba harjunud. Kissitamine näitab, kas suured heledad ja tumedad massid on paigas.</p>
+      </div>
+    </aside>
+
+    <section class="stage">
+      <div class="frame" id="frame">
+        <div class="empty" id="empty" hidden>
+          <h3>Alusta kahest fotost</h3>
+          <ol>
+            <li id="emptyRef"><b>Originaal:</b> portreefoto, mille järgi joonistad, või toonikaardist salvestatud pilt.</li>
+            <li id="emptyDrw"><b>Joonistuse foto:</b> pildista oma joonistust paberil otse eest, nii et terve paber jääb kaadrisse.</li>
+          </ol>
+          <div class="btns">
+            <label class="btn" for="fileRef">Vali originaal…</label>
+            <label class="btn ghost" for="fileDrw">Vali joonistuse foto…</label>
+          </div>
+        </div>
+        <div id="viewCorners" hidden>
+          <div class="pic" id="picCorners">
+            <canvas class="view" id="cvPhoto"></canvas>
+            <svg viewBox="0 0 1 1" preserveAspectRatio="none"><polygon id="quad" points=""></polygon><line id="topEdge" x1="0" y1="0" x2="0" y2="0"></line></svg>
+            <span class="tag" id="topTag">pildi ülemine serv</span>
+          </div>
+        </div>
+        <div id="viewAlign" class="pair-view" hidden>
+          <figure><figcaption>Originaal</figcaption><div class="pic" id="picAref"><canvas class="view" id="cvAref"></canvas></div></figure>
+          <figure><figcaption>Sinu joonistus</figcaption><div class="pic" id="picAdrw"><canvas class="view" id="cvAdrw"></canvas></div></figure>
+        </div>
+        <div id="viewCompare">
+          <div class="cmp-wrap" id="cmpWrap">
+            <canvas id="cmpCanvas"></canvas>
+          </div>
+          <span class="badge l" id="badgeL" hidden></span>
+          <span class="badge r" id="badgeR" hidden></span>
+        </div>
+        <canvas id="loupe" width="280" height="280" hidden></canvas>
+        <span class="status" id="status" hidden></span>
+      </div>
+      <div class="info" id="info"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+const SAMPLE_REF = "";
+const SAMPLE_DRW = "";
+/* ---------- põhitöötlus ---------- */
+function boxH(src, dst, w, h, r) {
+  const n = 2 * r + 1;
+  for (let y = 0; y < h; y++) {
+    const o = y * w; let s = 0;
+    for (let k = -r; k <= r; k++) s += src[o + Math.min(w - 1, Math.max(0, k))];
+    for (let x = 0; x < w; x++) {
+      dst[o + x] = s / n;
+      s += src[o + Math.min(w - 1, x + r + 1)] - src[o + Math.max(0, x - r)];
+    }
+  }
+}
+function boxV(src, dst, w, h, r) {
+  const n = 2 * r + 1;
+  for (let x = 0; x < w; x++) {
+    let s = 0;
+    for (let k = -r; k <= r; k++) s += src[Math.min(h - 1, Math.max(0, k)) * w + x];
+    for (let y = 0; y < h; y++) {
+      dst[y * w + x] = s / n;
+      s += src[Math.min(h - 1, y + r + 1) * w + x] - src[Math.max(0, y - r) * w + x];
+    }
+  }
+}
+function blur(src, w, h, r, passes = 3) {
+  const a = Float32Array.from(src); if (r <= 0) return a;
+  const b = new Float32Array(a.length);
+  for (let i = 0; i < passes; i++) { boxH(a, b, w, h, r); boxV(b, a, w, h, r); }
+  return a;
+}
+function resample(src, w, h, nw, nh) { // kastkeskmistamine allapoole
+  const out = new Float32Array(nw * nh), sx = w / nw, sy = h / nh;
+  for (let j = 0; j < nh; j++) {
+    const y0 = Math.floor(j * sy), y1 = Math.max(y0 + 1, Math.floor((j + 1) * sy));
+    for (let i = 0; i < nw; i++) {
+      const x0 = Math.floor(i * sx), x1 = Math.max(x0 + 1, Math.floor((i + 1) * sx));
+      let s = 0, n = 0;
+      for (let y = y0; y < y1 && y < h; y++) for (let x = x0; x < x1 && x < w; x++) { s += src[y * w + x]; n++; }
+      out[j * nw + i] = n ? s / n : 0;
+    }
+  }
+  return out;
+}
+function percentiles(v, qs, mask) {
+  const B = 1024, hist = new Float64Array(B); let n = 0;
+  for (let i = 0; i < v.length; i++) { if (mask && !mask[i]) continue; hist[Math.min(B - 1, Math.max(0, (v[i] * B) | 0))]++; n++; }
+  return qs.map(q => { const t = n * q; let acc = 0, b = 0; while (b < B - 1 && acc + hist[b] < t) acc += hist[b++]; return (b + 0.5) / B; });
+}
+function stretch(v, mask, qlo = 0.01, qhi = 0.99) {
+  const [lo, hi] = percentiles(v, [qlo, qhi], mask), span = Math.max(0.05, hi - lo);
+  const o = new Float32Array(v.length);
+  for (let i = 0; i < v.length; i++) { const x = (v[i] - lo) / span; o[i] = x < 0 ? 0 : x > 1 ? 1 : x; }
+  return o;
+}
+// valguse ühtlustus: paberi heledusele sobitatakse sile pind (2. astme polünoom) ja jagatakse välja
+function inQuad(q, x, y) {
+  let sign = 0;
+  for (let i = 0; i < 4; i++) {
+    const a = q[i], b = q[(i + 1) % 4], c = (b.x - a.x) * (y - a.y) - (b.y - a.y) * (x - a.x);
+    if (c !== 0) { if (sign && Math.sign(c) !== sign) return false; sign = Math.sign(c); }
+  }
+  return true;
+}
+function solve6(M, v) {
+  const n = 6, A = M.map((r, i) => [...r, v[i]]);
+  for (let c = 0; c < n; c++) {
+    let p = c; for (let r = c + 1; r < n; r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r;
+    [A[c], A[p]] = [A[p], A[c]];
+    if (Math.abs(A[c][c]) < 1e-12) return null;
+    for (let r = 0; r < n; r++) if (r !== c) { const f = A[r][c] / A[c][c]; for (let k = c; k <= n; k++) A[r][k] -= f * A[c][k]; }
+  }
+  return A.map((r, i) => r[n] / r[i]);
+}
+function lightField(G, w, h, quad) {
+  const cell = Math.max(8, Math.ceil(Math.max(w, h) / 40));
+  const cx0 = quad.reduce((s, p) => s + p.x, 0) / 4, cy0 = quad.reduce((s, p) => s + p.y, 0) / 4;
+  const qe = quad.map(p => ({ x: cx0 + (p.x - cx0) * 1.06, y: cy0 + (p.y - cy0) * 1.06 }));
+  const cells = [], hist = new Int32Array(64);
+  for (let y0 = 0; y0 < h; y0 += cell) for (let x0 = 0; x0 < w; x0 += cell) {
+    const x = Math.min(w, x0 + cell / 2), y = Math.min(h, y0 + cell / 2);
+    if (!inQuad(qe, x, y)) continue;
+    hist.fill(0); let n = 0;
+    for (let yy = y0; yy < Math.min(h, y0 + cell); yy++) for (let xx = x0; xx < Math.min(w, x0 + cell); xx++) { hist[Math.min(63, (G[yy * w + xx] * 64) | 0)]++; n++; }
+    let acc = 0, b = 0; const t = n * 0.9; while (b < 63 && acc + hist[b] < t) acc += hist[b++];
+    cells.push({ x: x / w - 0.5, y: y / h - 0.5, v: (b + 0.5) / 64 });
+  }
+  if (cells.length < 12) return null;
+  const sorted = cells.map(c => c.v).sort((a, b) => a - b), start = sorted[Math.floor(sorted.length * 0.7)];
+  let use = cells.filter(c => c.v >= start), coef = null;
+  const feat = c => [1, c.x, c.y, c.x * c.x, c.x * c.y, c.y * c.y];
+  for (let it = 0; it < 4; it++) {
+    const M = Array.from({ length: 6 }, () => new Array(6).fill(0)), r = new Array(6).fill(0);
+    for (const c of use) { const f = feat(c); for (let i = 0; i < 6; i++) { r[i] += f[i] * c.v; for (let j = 0; j < 6; j++) M[i][j] += f[i] * f[j]; } }
+    for (let i = 0; i < 6; i++) M[i][i] += 1e-6 * use.length;
+    const nc = solve6(M, r); if (!nc) break; coef = nc;
+    const fit = c => feat(c).reduce((s, f, i) => s + f * coef[i], 0);
+    const nu = cells.filter(c => c.v >= fit(c) * 0.92);
+    if (nu.length < 8) break; use = nu;
+  }
+  return coef;
+}
+function evenLight(G, w, h, quad) {
+  const coef = quad ? lightField(G, w, h, quad) : null;
+  const out = new Float32Array(w * h);
+  if (!coef) { out.set(G); return out; }
+  for (let y = 0; y < h; y++) {
+    const Y = (y + 0.5) / h - 0.5;
+    for (let x = 0; x < w; x++) {
+      const X = (x + 0.5) / w - 0.5;
+      const L = coef[0] + coef[1] * X + coef[2] * Y + coef[3] * X * X + coef[4] * X * Y + coef[5] * Y * Y;
+      const v = G[y * w + x] / Math.max(0.08, L);
+      out[y * w + x] = v > 1 ? 1 : v;
+    }
+  }
+  return out;
+}
+// paberi leidmine v2: heledus miinus värvilisus, mitu läve, ristkülikulisuse skoor, servade joonesobitus
+function paperness(G, C, n) {
+  const P = new Float32Array(n);
+  for (let i = 0; i < n; i++) P[i] = C ? G[i] - 1.3 * C[i] : G[i];
+  return P;
+}
+function exteriorOf(L, id, sw, sh) {
+  const sn = sw * sh, ext = new Uint8Array(sn), st = new Int32Array(sn); let sp = 0;
+  const push = p => { if (!ext[p] && L[p] !== id) { ext[p] = 1; st[sp++] = p; } };
+  for (let x = 0; x < sw; x++) { push(x); push((sh - 1) * sw + x); }
+  for (let y = 0; y < sh; y++) { push(y * sw); push(y * sw + sw - 1); }
+  while (sp) {
+    const q = st[--sp], x = q % sw;
+    if (x > 0) push(q - 1); if (x < sw - 1) push(q + 1); if (q >= sw) push(q - sw); if (q < sn - sw) push(q + sw);
+  }
+  return ext;
+}
+function findPaper(G, w, h, C) {
+  const n = w * h, Pf = paperness(G, C, n);
+  const k = 320 / Math.max(w, h), sw = Math.max(16, Math.round(w * k)), sh = Math.max(16, Math.round(h * k)), sn = sw * sh;
+  const s = blur(resample(Pf, w, h, sw, sh), sw, sh, 1, 1);
+  // Otsu
+  const hist = new Float64Array(256);
+  for (const v of s) hist[Math.min(255, Math.max(0, (v * 256) | 0))]++;
+  let sum = 0; for (let i = 0; i < 256; i++) sum += i * hist[i];
+  let wB = 0, sB = 0, best = 0, otsu = 128;
+  for (let t = 0; t < 256; t++) {
+    wB += hist[t]; if (!wB) continue; const wF = sn - wB; if (!wF) break;
+    sB += t * hist[t]; const mB = sB / wB, mF = (sum - sB) / wF, bt = wB * wF * (mB - mF) ** 2;
+    if (bt > best) { best = bt; otsu = t; }
+  }
+  const lab = new Int32Array(sn), stack = new Int32Array(sn), mask = new Uint8Array(sn), tmp = new Uint8Array(sn);
+  const perT = [];
+  for (let step = -2; step < 10; step++) {
+    const T = (otsu + 0.5) / 256 + step * 0.025;
+    let bestC = null;
+    for (let i = 0; i < sn; i++) mask[i] = s[i] >= T ? 1 : 0;
+    // avamine (erosioon + dilatsioon) lõikab kitsad sillad
+    for (const [src, dst, er] of [[mask, tmp, true], [tmp, mask, false]]) {
+      for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) {
+        let v = er ? 1 : 0;
+        for (let dy = -2; dy <= 2 && (er ? v : !v); dy++) for (let dx = -2; dx <= 2; dx++) {
+          const yy = y + dy, xx = x + dx;
+          const m = yy < 0 || xx < 0 || yy >= sh || xx >= sw ? 0 : src[yy * sw + xx];
+          if (er && !m) { v = 0; break; } if (!er && m) { v = 1; break; }
+        }
+        dst[y * sw + x] = v;
+      }
+    }
+    lab.fill(-1);
+    let c = 0;
+    for (let p = 0; p < sn; p++) {
+      if (lab[p] >= 0 || !mask[p]) continue;
+      let sp = 0, a = 0, touch = 0; stack[sp++] = p; lab[p] = c;
+      let tl = [1e9, 0, 0], br = [-1e9, 0, 0], tr = [-1e9, 0, 0], bl = [1e9, 0, 0];
+      while (sp) {
+        const q = stack[--sp]; a++; const x = q % sw, y = (q / sw) | 0;
+        if (x === 0 || y === 0 || x === sw - 1 || y === sh - 1) touch++;
+        if (x + y < tl[0]) tl = [x + y, x, y]; if (x + y > br[0]) br = [x + y, x, y];
+        if (x - y > tr[0]) tr = [x - y, x, y]; if (x - y < bl[0]) bl = [x - y, x, y];
+        if (x > 0 && lab[q - 1] < 0 && mask[q - 1]) { lab[q - 1] = c; stack[sp++] = q - 1; }
+        if (x < sw - 1 && lab[q + 1] < 0 && mask[q + 1]) { lab[q + 1] = c; stack[sp++] = q + 1; }
+        if (y > 0 && lab[q - sw] < 0 && mask[q - sw]) { lab[q - sw] = c; stack[sp++] = q - sw; }
+        if (y < sh - 1 && lab[q + sw] < 0 && mask[q + sw]) { lab[q + sw] = c; stack[sp++] = q + sw; }
+      }
+      if (a >= sn * 0.02) {
+        const ext = exteriorOf(lab, c, sw, sh); let filled = 0; for (let i = 0; i < sn; i++) if (!ext[i]) filled++;
+        if (filled < sn * 0.04) { c++; continue; }
+        const quad = [tl, tr, br, bl].map(([, x, y]) => ({ x: x + 0.5, y: y + 0.5 }));
+        let qa = 0; for (let i = 0; i < 4; i++) { const p1 = quad[i], p2 = quad[(i + 1) % 4]; qa += p1.x * p2.y - p2.x * p1.y; }
+        qa = Math.abs(qa) / 2;
+        const rect = Math.min(1, filled / Math.max(1, qa));
+        const tf = touch / (2 * (sw + sh));
+        const score = filled * Math.pow(rect, 6) * (tf > 0.02 ? 0.15 : 1);
+        if (!bestC || score > bestC.score) bestC = { score, quad, T, label: c, lab: Int32Array.from(lab), rect, tf, ext };
+      }
+      c++;
+    }
+    if (bestC) perT.push(bestC);
+  }
+  if (false) console.log(perT.map(c => [c.T.toFixed(3), c.rect.toFixed(3), c.tf.toFixed(3), Math.round(c.score), JSON.stringify(c.quad.map(p => [Math.round(p.x / k), Math.round(p.y / k)]))].join(" ")).join("\n"));
+  // madalaim lävi, mille juures ala on veel korralik nelinurk ega puuduta foto serva
+  const okT = perT.filter(c => c.tf <= 0.02);
+  const pool = okT.length ? okT : perT;
+  const topR = Math.max(...pool.map(c => c.rect));
+  let bestC = pool.filter(c => c.rect >= topR - 0.006).sort((a, b) => b.score - a.score)[0];
+  if (!bestC || bestC.rect < 0.6) return null;
+  // servad: piirpikslid jagatakse külgede vahel ja igale küljele sobitatakse joon
+  const q0 = bestC.quad, L = bestC.lab, id = bestC.label, EX = bestC.ext;
+  const sides = [[], [], [], []];
+  const segDist = (p, a, b) => {
+    const vx = b.x - a.x, vy = b.y - a.y, t = Math.max(0, Math.min(1, ((p.x - a.x) * vx + (p.y - a.y) * vy) / (vx * vx + vy * vy)));
+    return [Math.hypot(p.x - a.x - t * vx, p.y - a.y - t * vy), t];
+  };
+  for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) {
+    const p = y * sw + x; if (L[p] !== id) continue;
+    const edge = x === 0 || y === 0 || x === sw - 1 || y === sh - 1 || EX[p - 1] || EX[p + 1] || EX[p - sw] || EX[p + sw];
+    if (!edge) continue;
+    const pt = { x: x + 0.5, y: y + 0.5 };
+    let bi = -1, bd = 1e9, bt = 0;
+    for (let i = 0; i < 4; i++) { const [d, t] = segDist(pt, q0[i], q0[(i + 1) % 4]); if (d < bd) { bd = d; bi = i; bt = t; } }
+    if (bt > 0.12 && bt < 0.88) sides[bi].push(pt);
+  }
+  const fitLine = (pts, tol) => {
+    if (pts.length < 4) return null;
+    let bestIn = null, seed = 12345;
+    const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+    for (let it = 0; it < 250; it++) {
+      const p = pts[(rnd() * pts.length) | 0], q = pts[(rnd() * pts.length) | 0];
+      const dx = q.x - p.x, dy = q.y - p.y, l = Math.hypot(dx, dy); if (l < 1e-6) continue;
+      const nx = -dy / l, ny = dx / l, inl = [];
+      for (const r of pts) if (Math.abs((r.x - p.x) * nx + (r.y - p.y) * ny) <= tol) inl.push(r);
+      if (!bestIn || inl.length > bestIn.length) bestIn = inl;
+    }
+    const use = bestIn && bestIn.length >= 4 ? bestIn : pts;
+    let mx = 0, my = 0; for (const p of use) { mx += p.x; my += p.y; } mx /= use.length; my /= use.length;
+    let sxx = 0, syy = 0, sxy = 0; for (const p of use) { const dx = p.x - mx, dy = p.y - my; sxx += dx * dx; syy += dy * dy; sxy += dx * dy; }
+    const th = 0.5 * Math.atan2(2 * sxy, sxx - syy);
+    return { mx, my, dx: Math.cos(th), dy: Math.sin(th), support: use.length / pts.length };
+  };
+  // täpsustus täisresolutsioonil: otsime iga küljenormaali suunas tugevaimat heleduse langust
+  const Pb = blur(Pf, w, h, 1, 1);
+  const lines = [];
+  for (let i = 0; i < 4; i++) {
+    let ln = fitLine(sides[i], 1.2);
+    const a0 = q0[i], b0 = q0[(i + 1) % 4];
+    if (!ln) ln = { mx: (a0.x + b0.x) / 2, my: (a0.y + b0.y) / 2, dx: (b0.x - a0.x), dy: (b0.y - a0.y) };
+    const nl = Math.hypot(ln.dx, ln.dy); ln = { mx: ln.mx / k, my: ln.my / k, dx: ln.dx / nl, dy: ln.dy / nl };
+    // projitseerime küljed joonele
+    const A = { x: a0.x / k, y: a0.y / k }, B = { x: b0.x / k, y: b0.y / k };
+    const ta = (A.x - ln.mx) * ln.dx + (A.y - ln.my) * ln.dy, tb = (B.x - ln.mx) * ln.dx + (B.y - ln.my) * ln.dy;
+    // normaal väljapoole: paberi keskpunktist eemale
+    const cx = q0.reduce((s, p) => s + p.x, 0) / 4 / k, cy = q0.reduce((s, p) => s + p.y, 0) / 4 / k;
+    let nx = -ln.dy, ny = ln.dx; if ((ln.mx - cx) * nx + (ln.my - cy) * ny < 0) { nx = -nx; ny = -ny; }
+    const R = Math.max(6, Math.round(Math.max(w, h) * 0.025)), pts = [];
+    for (let j = 0; j <= 60; j++) {
+      const t = ta + (tb - ta) * (0.1 + 0.8 * j / 60);
+      const bx = ln.mx + ln.dx * t, by = ln.my + ln.dy * t;
+      let bestD = 0, bestO = null;
+      for (let o = -R; o <= R; o++) {
+        const x1 = bx + nx * (o - 1), y1 = by + ny * (o - 1), x2 = bx + nx * (o + 1), y2 = by + ny * (o + 1);
+        if (x1 < 1 || y1 < 1 || x2 < 1 || y2 < 1 || x1 > w - 2 || x2 > w - 2 || y1 > h - 2 || y2 > h - 2) continue;
+        const d = sampleBil(Pb, w, h, x1, y1) - sampleBil(Pb, w, h, x2, y2);
+        if (d > bestD) { bestD = d; bestO = o; }
+      }
+      if (bestO !== null && bestD > 0.04) pts.push({ x: bx + nx * bestO, y: by + ny * bestO });
+    }
+    const fl = pts.length >= 8 ? fitLine(pts, Math.max(2, Math.max(w, h) * 0.0015)) : null;
+    if (fl) { const nn = Math.hypot(fl.dx, fl.dy); lines.push({ mx: fl.mx, my: fl.my, dx: fl.dx / nn, dy: fl.dy / nn }); }
+    else lines.push(ln);
+  }
+  const inter = (l1, l2) => {
+    const det = l1.dx * l2.dy - l1.dy * l2.dx; if (Math.abs(det) < 1e-6) return null;
+    const t = ((l2.mx - l1.mx) * l2.dy - (l2.my - l1.my) * l2.dx) / det;
+    return { x: l1.mx + l1.dx * t, y: l1.my + l1.dy * t };
+  };
+  const out = [];
+  for (let i = 0; i < 4; i++) {
+    // nurk i on külgede (i-1) ja i lõikepunkt
+    const p = inter(lines[(i + 3) % 4], lines[i]), fb = { x: q0[i].x / k, y: q0[i].y / k };
+    out.push(p && Math.hypot(p.x - fb.x, p.y - fb.y) < 0.12 * Math.max(w, h) ? p : fb);
+  }
+  return out;
+}
+
+// ruudust nelinurgaks (Heckbert)
+function homography(q) {
+  const [p0, p1, p2, p3] = q;
+  const dx1 = p1.x - p2.x, dx2 = p3.x - p2.x, dx3 = p0.x - p1.x + p2.x - p3.x;
+  const dy1 = p1.y - p2.y, dy2 = p3.y - p2.y, dy3 = p0.y - p1.y + p2.y - p3.y;
+  let g = 0, hh = 0;
+  if (Math.abs(dx3) > 1e-9 || Math.abs(dy3) > 1e-9) {
+    const den = dx1 * dy2 - dx2 * dy1;
+    g = (dx3 * dy2 - dx2 * dy3) / den; hh = (dx1 * dy3 - dx3 * dy1) / den;
+  }
+  return {
+    a: p1.x - p0.x + g * p1.x, b: p3.x - p0.x + hh * p3.x, c: p0.x,
+    d: p1.y - p0.y + g * p1.y, e: p3.y - p0.y + hh * p3.y, f: p0.y, g, h: hh
+  };
+}
+function sampleBil(G, w, h, x, y) {
+  x -= 0.5; y -= 0.5;
+  if (x < 0) x = 0; if (y < 0) y = 0; if (x > w - 1) x = w - 1; if (y > h - 1) y = h - 1;
+  const x0 = x | 0, y0 = y | 0, x1 = Math.min(w - 1, x0 + 1), y1 = Math.min(h - 1, y0 + 1), tx = x - x0, ty = y - y0;
+  return (G[y0 * w + x0] * (1 - tx) + G[y0 * w + x1] * tx) * (1 - ty) + (G[y1 * w + x0] * (1 - tx) + G[y1 * w + x1] * tx) * ty;
+}
+function rectify(G, pw, ph, Hm, rw, rh) {
+  const out = new Float32Array(rw * rh);
+  for (let j = 0; j < rh; j++) {
+    const v = (j + 0.5) / rh;
+    for (let i = 0; i < rw; i++) {
+      const u = (i + 0.5) / rw, z = Hm.g * u + Hm.h * v + 1;
+      out[j * rw + i] = sampleBil(G, pw, ph, (Hm.a * u + Hm.b * v + Hm.c) / z, (Hm.d * u + Hm.e * v + Hm.f) / z);
+    }
+  }
+  return out;
+}
+// sarnasusteisendus T: R (sirgestatud joonistus) -> F (originaal): w = [a -b; b a] z + t
+function simFrom(s, th, tx, ty) { return { a: s * Math.cos(th), b: s * Math.sin(th), tx, ty }; }
+function simInv(T, wx, wy) { const d = T.a * T.a + T.b * T.b, X = wx - T.tx, Y = wy - T.ty; return [(T.a * X + T.b * Y) / d, (-T.b * X + T.a * Y) / d]; }
+function simFwd(T, zx, zy) { return [T.a * zx - T.b * zy + T.tx, T.b * zx + T.a * zy + T.ty]; }
+function simFromPoints(r1, r2, f1, f2) {
+  const rx = r2.x - r1.x, ry = r2.y - r1.y, fx = f2.x - f1.x, fy = f2.y - f1.y, d = rx * rx + ry * ry;
+  if (d < 1e-9) return null;
+  const a = (fx * rx + fy * ry) / d, b = (fy * rx - fx * ry) / d;
+  return { a, b, tx: f1.x - (a * r1.x - b * r1.y), ty: f1.y - (b * r1.x + a * r1.y) };
+}
+// automaatne joondus normaliseeritud ristkorrelatsiooniga
+function nccEval(As, fsw, fsh, fsc, Rs, rsw, rsh, rsc, T, minValid) {
+  let n = 0, sa = 0, sb = 0, saa = 0, sbb = 0, sab = 0;
+  const d = T.a * T.a + T.b * T.b, ia = T.a / d, ib = T.b / d;
+  for (let j = 0; j < fsh; j++) {
+    const wy = (j + 0.5) / fsc - T.ty;
+    for (let i = 0; i < fsw; i++) {
+      const wx = (i + 0.5) / fsc - T.tx;
+      const zx = (ia * wx + ib * wy) * rsc, zy = (-ib * wx + ia * wy) * rsc;
+      if (zx < 0 || zy < 0 || zx >= rsw || zy >= rsh) continue;
+      const a = As[j * fsw + i], b = sampleBil(Rs, rsw, rsh, zx, zy);
+      n++; sa += a; sb += b; saa += a * a; sbb += b * b; sab += a * b;
+    }
+  }
+  if (n < minValid * fsw * fsh) return -2;
+  const ca = saa - sa * sa / n, cb = sbb - sb * sb / n;
+  if (ca <= 1e-9 || cb <= 1e-9) return -2;
+  return (sab - sa * sb / n) / Math.sqrt(ca * cb);
+}
+function pyramid(img, w, h, long) {
+  const k = long / Math.max(w, h), nw = Math.max(4, Math.round(w * k)), nh = Math.max(4, Math.round(h * k));
+  return { img: resample(img, w, h, nw, nh), w: nw, h: nh, sc: nw / w };
+}
+function autoAlign(A, fw, fh, R, rw, rh, mode) {
+  const Ab = blur(A, fw, fh, Math.max(1, Math.round(Math.max(fw, fh) / 150)));
+  const Rb = blur(R, rw, rh, Math.max(1, Math.round(Math.max(rw, rh) / 150)));
+  const Fs = pyramid(Ab, fw, fh, 56), Rs = pyramid(Rb, rw, rh, 220);
+  const qs = [];
+  if (mode === "image") for (let i = 0; i < 7; i++) qs.push(0.9 + 0.025 * i);
+  else for (let i = 0; i < 18; i++) qs.push(0.32 * Math.pow(1.05 / 0.32, i / 17));
+  const cands = [];
+  for (const q of qs) {
+    const s = fw / (q * rw), fwR = fw / s, fhR = fh / s;
+    const step = 0.024 * rw, sl = 0.04;
+    let u0a = -sl * rw, u0b = rw - fwR + sl * rw, v0a = -sl * rh, v0b = rh - fhR + sl * rh;
+    if (mode === "image") { u0a = -0.04 * rw; u0b = 0.04 * rw; v0a = -0.04 * rh; v0b = 0.04 * rh; }
+    if (u0b < u0a) { const m = (u0a + u0b) / 2; u0a = m - step; u0b = m + step; }
+    if (v0b < v0a) { const m = (v0a + v0b) / 2; v0a = m - step; v0b = m + step; }
+    for (let v0 = v0a; v0 <= v0b + 1e-6; v0 += step) for (let u0 = u0a; u0 <= u0b + 1e-6; u0 += step) {
+      const T = simFrom(s, 0, -s * u0, -s * v0);
+      const sc = nccEval(Fs.img, Fs.w, Fs.h, Fs.sc, Rs.img, Rs.w, Rs.h, Rs.sc, T, 0.9);
+      if (sc > -1) cands.push({ sc, s, u0, v0 });
+    }
+  }
+  if (!cands.length) return null;
+  cands.sort((x, y) => y.sc - x.sc);
+  const picks = [];
+  for (const c of cands) {
+    if (picks.every(p => Math.abs(Math.log(p.s / c.s)) > 0.06 || Math.hypot(p.u0 - c.u0, p.v0 - c.v0) > 0.06 * rw)) picks.push(c);
+    if (picks.length >= 3) break;
+  }
+    const F2 = pyramid(Ab, fw, fh, 150), R2 = pyramid(Rb, rw, rh, 480);
+  let best = null;
+  for (const c of picks) {
+    let p = [Math.log(c.s), 0, -c.s * c.u0, -c.s * c.v0];
+    const ev = p => nccEval(F2.img, F2.w, F2.h, F2.sc, R2.img, R2.w, R2.h, R2.sc, simFrom(Math.exp(p[0]), p[1], p[2], p[3]), 0.85);
+    let cur = ev(p), st = [0.04, 0.02, 0.02 * fw, 0.02 * fw];
+    for (let it = 0; it < 80; it++) {
+      let improved = false;
+      for (let k = 0; k < 4; k++) for (const sg of [1, -1]) {
+        const q = p.slice(); q[k] += sg * st[k];
+        if (k === 1 && Math.abs(q[1]) > 0.09) continue;
+        const sc = ev(q); if (sc > cur) { cur = sc; p = q; improved = true; }
+      }
+      if (!improved) { st = st.map(x => x / 2); if (st[2] < 0.0008 * fw) break; }
+    }
+    if (!best || cur > best.sc) best = { sc: cur, p };
+  }
+  return { T: simFrom(Math.exp(best.p[0]), best.p[1], best.p[2], best.p[3]), score: best.sc };
+}
+// joonistus originaali koordinaatidesse
+function warpToF(G, pw, ph, Hm, rw, rh, T, fw, fh) {
+  const D = new Float32Array(fw * fh), M = new Uint8Array(fw * fh);
+  for (let j = 0; j < fh; j++) for (let i = 0; i < fw; i++) {
+    const [zx, zy] = simInv(T, i + 0.5, j + 0.5);
+    if (zx < 0 || zy < 0 || zx > rw || zy > rh) continue;
+    const u = zx / rw, v = zy / rh, z = Hm.g * u + Hm.h * v + 1;
+    D[j * fw + i] = sampleBil(G, pw, ph, (Hm.a * u + Hm.b * v + Hm.c) / z, (Hm.d * u + Hm.e * v + Hm.f) / z);
+    M[j * fw + i] = 1;
+  }
+  return { D, M };
+}
+// kontuurid: toonialade piirid samade protsentiilide järgi
+function contourMask(img, w, h, levels, mask, r) {
+  const b = blur(img, w, h, r);
+  const qs = []; for (let k = 1; k < levels; k++) qs.push(k / levels);
+  const t = percentiles(b, qs, mask);
+  const idx = new Uint8Array(w * h);
+  for (let i = 0; i < idx.length; i++) { let k = 0; while (k < t.length && b[i] >= t[k]) k++; idx[i] = k; }
+  const m = new Uint8Array(w * h);
+  for (let y = 0; y < h - 1; y++) for (let x = 0; x < w - 1; x++) {
+    const p = y * w + x;
+    if (mask && (!mask[p] || !mask[p + 1] || !mask[p + w])) continue;
+    if (idx[p] !== idx[p + 1] || idx[p] !== idx[p + w]) m[p] = 1;
+  }
+  return m;
+}
+
+
+/* ---------- olek ---------- */
+const $ = id => document.getElementById(id);
+const S = {
+  ref: null,      // { gray, A, w, h, canvas }
+  photo: null,    // { gray, w, h, canvas }
+  corners: null,  // 4 punkti foto pikslites: üleval vasakul, üleval paremal, all paremal, all vasakul
+  frame: "paper", paperW: 50, paperH: 70,
+  geo: null,      // { G, Hm, R, rw, rh, Rcanvas }
+  T: null,        // sarnasusteisendus R -> F
+  mk: null,       // joonduspunktid { ref: [p,p], drw: [p,p] } pikslites
+  cmp: null,      // { D, M, Dn, cvA, cvD }
+  step: "compare", mode: "diff", cbase: "drw",
+  blinkOn: true, blinkShow: 0, blinkTimer: 0,
+  split: 0.5, isSample: true
+};
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+if (reduced) S.blinkOn = false;
+
+function showStatus(t) { const s = $("status"); s.textContent = t || ""; s.hidden = !t; }
+const later = fn => new Promise(res => requestAnimationFrame(() => setTimeout(() => res(fn()), 0)));
+
+/* ---------- piltide laadimine ---------- */
+function loadImg(src) {
+  return new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src; });
+}
+function toCanvas(im, long) {
+  const k = Math.min(1, long / Math.max(im.naturalWidth, im.naturalHeight));
+  const w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const g = c.getContext("2d", { willReadFrequently: true });
+  g.imageSmoothingQuality = "high"; g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.drawImage(im, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h).data, gray = new Float32Array(w * h), chroma = new Float32Array(w * h);
+  for (let i = 0, p = 0; p < gray.length; p++, i += 4) {
+    const r = d[i], gg = d[i + 1], b = d[i + 2];
+    gray[p] = (0.299 * r + 0.587 * gg + 0.114 * b) / 255;
+    chroma[p] = (Math.max(r, gg, b) - Math.min(r, gg, b)) / 255;
+  }
+  return { canvas: c, gray, chroma, w, h };
+}
+function thumb(cv, src) {
+  const g = cv.getContext("2d"); g.clearRect(0, 0, cv.width, cv.height);
+  const k = Math.min(cv.width / src.width, cv.height / src.height), w = src.width * k, h = src.height * k;
+  g.drawImage(src, (cv.width - w) / 2, (cv.height - h) / 2, w, h);
+}
+function grayCanvas(v, w, h) {
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const g = c.getContext("2d"), im = g.createImageData(w, h), d = im.data;
+  for (let p = 0, i = 0; p < v.length; p++, i += 4) { const x = Math.round(v[p] * 255); d[i] = d[i + 1] = d[i + 2] = x; d[i + 3] = 255; }
+  g.putImageData(im, 0, 0); return c;
+}
+async function setRef(src, name) {
+  const im = await loadImg(src);
+  const r = toCanvas(im, 1000);
+  r.A = stretch(r.gray, null, 0.005, 0.995);
+  S.ref = r; thumb($("thumbRef"), r.canvas); $("nameRef").textContent = name;
+  if (S.frame === "image") S.geo = null;
+  S.T = null; S.mk = null; S.cmp = null;
+}
+async function setDrawing(src, name) {
+  const im = await loadImg(src);
+  const p = toCanvas(im, 1600);
+  S.photo = p; thumb($("thumbDrw"), p.canvas); $("nameDrw").textContent = name;
+  S.found = detectCorners();
+  S.geo = null; S.T = null; S.mk = null; S.cmp = null;
+  const cv = $("cvPhoto"); cv.width = p.w; cv.height = p.h; cv.getContext("2d").drawImage(p.canvas, 0, 0);
+}
+function detectCorners() {
+  const p = S.photo;
+  let q = findPaper(p.gray, p.w, p.h, p.chroma), found = !!q;
+  if (!q) q = [{ x: p.w * 0.12, y: p.h * 0.12 }, { x: p.w * 0.88, y: p.h * 0.12 }, { x: p.w * 0.88, y: p.h * 0.88 }, { x: p.w * 0.12, y: p.h * 0.88 }];
+  if (S.frame === "paper") {
+    const d = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+    const qa = (d(q[0], q[1]) + d(q[3], q[2])) / (d(q[0], q[3]) + d(q[1], q[2]));
+    const pa = S.paperW / S.paperH;
+    if ((qa > 1) !== (pa > 1) && Math.abs(Math.log(qa)) > 0.15) q = [q[3], q[0], q[1], q[2]];
+  }
+  S.corners = q;
+  return found;
+}
+function fileTo(which, f) {
+  if (!f || !f.type.startsWith("image/")) return;
+  const r = new FileReader();
+  r.onload = async () => {
+    try {
+      showStatus("Laen pilti…");
+      S.isSample = false; $("sampleNote").hidden = true;
+      if (which === "ref") {
+        await setRef(r.result, f.name);
+        if (!S.photo) { showStatus(""); showEmpty(); }
+        else if (S.step === "corners") { showStatus(""); renderStep(); }
+        else await goto(S.step === "align" ? "align" : "compare");
+      } else {
+        await setDrawing(r.result, f.name);
+        await goto("corners");
+        showStatus(S.found ? "" : "Paberit ei leitud automaatselt. Lohista nurgad ise paika.");
+      }
+    } catch (e) { showStatus("Seda faili ei õnnestunud pildina avada. Proovi JPG- või PNG-faili."); }
+  };
+  r.readAsDataURL(f);
+}
+$("fileRef").addEventListener("change", e => fileTo("ref", e.target.files[0]));
+$("fileDrw").addEventListener("change", e => fileTo("drw", e.target.files[0]));
+for (const [el, which] of [[$("srcRef"), "ref"], [$("srcDrw"), "drw"], [$("frame"), "drw"]]) {
+  ["dragenter", "dragover"].forEach(t => el.addEventListener(t, e => { e.preventDefault(); e.stopPropagation(); el.classList.add("drag"); }));
+  ["dragleave", "drop"].forEach(t => el.addEventListener(t, e => { e.preventDefault(); e.stopPropagation(); el.classList.remove("drag"); }));
+  el.addEventListener("drop", e => fileTo(which, e.dataTransfer.files[0]));
+}
+window.addEventListener("paste", e => {
+  const it = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith("image/"));
+  if (it) fileTo("drw", it.getAsFile());
+});
+
+/* ---------- geomeetria ---------- */
+function rectSize() {
+  const aspect = S.frame === "paper" ? S.paperW / S.paperH : S.ref.w / S.ref.h;
+  return aspect >= 1 ? [1000, Math.round(1000 / aspect)] : [Math.round(1000 * aspect), 1000];
+}
+function ensureGeo() {
+  if (S.geo) return S.geo;
+  const p = S.photo, [rw, rh] = rectSize();
+  const G = $("evenLight").checked ? evenLight(p.gray, p.w, p.h, S.corners) : p.gray;
+  const Hm = homography(S.corners);
+  const R = rectify(G, p.w, p.h, Hm, rw, rh);
+  S.geo = { G, Hm, R, rw, rh, Rcanvas: grayCanvas(stretch(R, null, 0.01, 0.995), rw, rh) };
+  return S.geo;
+}
+function defaultT() {
+  const { rw, rh } = S.geo, fw = S.ref.w, fh = S.ref.h;
+  if (S.frame === "image") return simFrom(fw / rw, 0, 0, 0);
+  const s = fw / (0.8 * rw);
+  return simFrom(s, 0, -s * 0.1 * rw, -s * (rh - 0.8 * rw * fh / fw) / 2);
+}
+function setMarkersFromT() {
+  const fw = S.ref.w, fh = S.ref.h;
+  const ref = [{ x: fw * 0.33, y: fh * 0.33 }, { x: fw * 0.66, y: fh * 0.33 }];
+  const drw = ref.map(p => { const [x, y] = simInv(S.T, p.x, p.y); return { x, y }; });
+  S.mk = { ref, drw };
+}
+function TfromMarkers() {
+  const m = S.mk, T = simFromPoints(m.drw[0], m.drw[1], m.ref[0], m.ref[1]);
+  if (T) { S.T = T; S.cmp = null; }
+}
+async function runAutoAlign() {
+  showStatus("Joondan automaatselt…");
+  await later(() => {
+    const g = ensureGeo();
+    const r = autoAlign(S.ref.A, S.ref.w, S.ref.h, g.R, g.rw, g.rh, S.frame);
+    S.T = r ? r.T : defaultT();
+    setMarkersFromT(); S.cmp = null;
+  });
+  showStatus("");
+}
+function ensureCmp() {
+  if (S.cmp) return S.cmp;
+  const g = ensureGeo(), p = S.photo, fw = S.ref.w, fh = S.ref.h;
+  const { D, M } = warpToF(g.G, p.w, p.h, g.Hm, g.rw, g.rh, S.T, fw, fh);
+  const Dn = stretch(D, M, 0.01, 0.99);
+  const shown = new Float32Array(Dn.length);
+  for (let i = 0; i < Dn.length; i++) shown[i] = M[i] ? Dn[i] : 0.97;
+  S.cmp = { D, M, Dn, cvA: grayCanvas(S.ref.A, fw, fh), cvD: grayCanvas(shown, fw, fh), cache: {} };
+  return S.cmp;
+}
+
+/* ---------- sammud ---------- */
+function showEmpty() {
+  document.querySelectorAll("[data-step]").forEach(b => { if (b.dataset.step === "corners") b.setAttribute("aria-current", "step"); else b.removeAttribute("aria-current"); });
+  ["viewCorners", "viewAlign", "viewCompare"].forEach(id => $(id).hidden = true);
+  document.querySelectorAll("[data-panel]").forEach(p => p.hidden = true);
+  $("empty").hidden = false;
+  $("emptyRef").classList.toggle("done", !!S.ref); $("emptyDrw").classList.toggle("done", !!S.photo);
+  $("info").innerHTML = S.ref ? "<p>Originaal on valitud. Lisa nüüd foto oma joonistusest.</p>" : "";
+}
+async function goto(step) {
+  if (!S.photo) { showEmpty(); showStatus(""); return; }
+  if (!S.ref && step !== "corners") { step = "corners"; showStatus("Lisa enne originaalfoto, siis saad joondada ja võrrelda."); setTimeout(() => showStatus(""), 3500); }
+  S.step = step;
+  if (step !== "corners" && !S.T) await runAutoAlign();
+  if (step === "align" && !S.mk) setMarkersFromT();
+  if (step === "compare") { showStatus("Arvutan…"); await later(ensureCmp); showStatus(""); }
+  renderStep();
+}
+document.querySelectorAll("[data-step]").forEach(b => b.addEventListener("click", () => goto(b.dataset.step)));
+document.querySelectorAll("[data-goto]").forEach(b => b.addEventListener("click", () => goto(b.dataset.goto)));
+
+function renderStep() {
+  $("empty").hidden = true;
+  document.querySelectorAll("[data-step]").forEach(b => { if (b.dataset.step === S.step) b.setAttribute("aria-current", "step"); else b.removeAttribute("aria-current"); });
+  document.querySelectorAll("[data-panel]").forEach(p => p.hidden = p.dataset.panel !== S.step);
+  $("viewCorners").hidden = S.step !== "corners";
+  $("viewAlign").hidden = S.step !== "align";
+  $("viewCompare").hidden = S.step !== "compare";
+  stopBlink();
+  if (S.step === "corners") renderCorners();
+  if (S.step === "align") renderAlign();
+  if (S.step === "compare") renderCompare();
+}
+
+/* ---------- lohistatavad punktid ja suurendusklaas ---------- */
+function placeHandles(pic, pts, w, h, cls, labels) {
+  let hs = [...pic.querySelectorAll(".handle")];
+  if (hs.length !== pts.length) {
+    hs.forEach(x => x.remove()); hs = [];
+    pts.forEach((_, i) => {
+      const d = document.createElement("div"); d.className = "handle" + (cls ? " " + cls : ""); d.dataset.i = i;
+      if (labels) { const s = document.createElement("span"); s.textContent = labels[i]; d.appendChild(s); }
+      pic.appendChild(d); hs.push(d);
+    });
+  }
+  pts.forEach((p, i) => { hs[i].style.left = (p.x / w * 100) + "%"; hs[i].style.top = (p.y / h * 100) + "%"; });
+}
+function showLoupe(pic, src, x, y) {
+  const L = $("loupe"), fr = $("frame").getBoundingClientRect(), pr = pic.getBoundingClientRect();
+  const k = pr.width / src.width, size = 140, zoom = 3.2, ss = size / (zoom * k);
+  const g = L.getContext("2d"), dpr = L.width / size;
+  g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = "#808080"; g.fillRect(0, 0, L.width, L.height);
+  g.imageSmoothingEnabled = true;
+  g.drawImage(src, x - ss / 2, y - ss / 2, ss, ss, 0, 0, L.width, L.height);
+  g.strokeStyle = "#ff3b30"; g.lineWidth = 1.5 * dpr; g.beginPath();
+  g.moveTo(L.width / 2, L.height / 2 - 18 * dpr); g.lineTo(L.width / 2, L.height / 2 - 5 * dpr);
+  g.moveTo(L.width / 2, L.height / 2 + 5 * dpr); g.lineTo(L.width / 2, L.height / 2 + 18 * dpr);
+  g.moveTo(L.width / 2 - 18 * dpr, L.height / 2); g.lineTo(L.width / 2 - 5 * dpr, L.height / 2);
+  g.moveTo(L.width / 2 + 5 * dpr, L.height / 2); g.lineTo(L.width / 2 + 18 * dpr, L.height / 2); g.stroke();
+  const px = pr.left - fr.left + x * k, py = pr.top - fr.top + y * k;
+  let lx = px - size - 28, ly = py - size - 28;
+  if (lx < 6) lx = px + 28; if (ly < 6) ly = py + 28;
+  lx = Math.min(fr.width - size - 6, lx); ly = Math.min(fr.height - size - 6, ly);
+  L.style.left = lx + "px"; L.style.top = ly + "px"; L.hidden = false;
+}
+function hideLoupe() { $("loupe").hidden = true; }
+// pic: konteiner, getPts(): punktid pikslites, src(): lähtelõuend, onMove(i, p), onEnd()
+function draggable(pic, getPts, src, onMove, onEnd) {
+  let drag = null;
+  const toPx = e => { const r = pic.getBoundingClientRect(), s = src(); return { x: (e.clientX - r.left) / r.width * s.width, y: (e.clientY - r.top) / r.height * s.height }; };
+  pic.addEventListener("pointerdown", e => {
+    const pts = getPts(); if (!pts) return;
+    e.preventDefault();
+    const p = toPx(e), s = src(), r = pic.getBoundingClientRect(), k = r.width / s.width;
+    let bi = 0, bd = Infinity;
+    pts.forEach((q, i) => { const d = Math.hypot(q.x - p.x, q.y - p.y); if (d < bd) { bd = d; bi = i; } });
+    const onHandle = bd * k < 26;
+    drag = { i: bi, ox: onHandle ? pts[bi].x - p.x : 0, oy: onHandle ? pts[bi].y - p.y : 0, id: e.pointerId };
+    pic.setPointerCapture(e.pointerId);
+    const np = { x: p.x + drag.ox, y: p.y + drag.oy };
+    onMove(bi, np); showLoupe(pic, s, np.x, np.y);
+  });
+  pic.addEventListener("pointermove", e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const p = toPx(e), s = src();
+    const np = { x: Math.max(0, Math.min(s.width, p.x + drag.ox)), y: Math.max(0, Math.min(s.height, p.y + drag.oy)) };
+    onMove(drag.i, np); showLoupe(pic, s, np.x, np.y);
+  });
+  const end = e => { if (!drag || e.pointerId !== drag.id) return; drag = null; hideLoupe(); onEnd && onEnd(); };
+  pic.addEventListener("pointerup", end); pic.addEventListener("pointercancel", end);
+}
+
+/* ---------- samm 1: nurgad ---------- */
+function renderCorners() {
+  const p = S.photo, q = S.corners, pic = $("picCorners");
+  $("quad").setAttribute("points", q.map(c => `${c.x / p.w},${c.y / p.h}`).join(" "));
+  const te = $("topEdge");
+  te.setAttribute("x1", q[0].x / p.w); te.setAttribute("y1", q[0].y / p.h); te.setAttribute("x2", q[1].x / p.w); te.setAttribute("y2", q[1].y / p.h);
+  const tg = $("topTag"); tg.style.left = ((q[0].x + q[1].x) / 2 / p.w * 100) + "%"; tg.style.top = ((q[0].y + q[1].y) / 2 / p.h * 100) + "%";
+  placeHandles(pic, q, p.w, p.h);
+  const im = S.frame === "image";
+  $("paperCtl").hidden = im;
+  $("frameNote").textContent = im
+    ? "Märgi nurgad selle ala nurkadesse, mis vastab originaalfotole, näiteks ruudustiku või raami välisnurkadesse. Paberi suurust pole siis vaja."
+    : "Märgi paberilehe neli nurka. Pildi asukoht paberil leitakse joondusel automaatselt.";
+  $("info").innerHTML = (S.ref ? "" : "<p><b>Lisa ka originaalfoto</b>, et saaksid edasi joondada ja võrrelda.</p>") + "<p>Kontrolli, et sinine ala kataks täpselt paberi (või pildi ala). Paks joon peab olema joonistuse ülemises servas. Kui see pole nii, vajuta „Pööra 90°“.</p>";
+}
+draggable($("picCorners"), () => S.step === "corners" ? S.corners : null, () => S.photo.canvas,
+  (i, p) => { S.corners[i] = p; renderCorners(); },
+  () => { S.geo = null; S.cmp = null; S.mk = null; S.T = null; });
+$("detect").addEventListener("click", () => {
+  const ok = detectCorners(); S.geo = null; S.T = null; S.mk = null; S.cmp = null; renderCorners();
+  showStatus(ok ? "" : "Paberit ei leitud automaatselt. Lohista nurgad ise paika.");
+});
+$("rotate").addEventListener("click", () => {
+  const q = S.corners; S.corners = [q[3], q[0], q[1], q[2]];
+  S.geo = null; S.T = null; S.mk = null; S.cmp = null; renderCorners();
+});
+document.querySelectorAll("[data-frame]").forEach(b => b.addEventListener("click", () => {
+  S.frame = b.dataset.frame;
+  document.querySelectorAll("[data-frame]").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+  S.geo = null; S.T = null; S.mk = null; S.cmp = null; renderCorners();
+}));
+function readPaper() {
+  const w = parseFloat($("paperW").value), h = parseFloat($("paperH").value);
+  if (w > 0 && h > 0) { S.paperW = w; S.paperH = h; S.geo = null; S.T = null; S.mk = null; S.cmp = null; }
+}
+$("paperSel").addEventListener("change", () => {
+  const v = $("paperSel").value; if (v === "custom") return;
+  const [w, h] = v.split("x").map(Number); $("paperW").value = w; $("paperH").value = h; readPaper();
+});
+["paperW", "paperH"].forEach(id => $(id).addEventListener("input", () => { $("paperSel").value = "custom"; readPaper(); }));
+$("evenLight").addEventListener("change", () => { S.geo = null; S.cmp = null; });
+
+/* ---------- samm 2: joondus ---------- */
+function renderAlign() {
+  const g = ensureGeo(), fw = S.ref.w, fh = S.ref.h;
+  const ca = $("cvAref"); if (ca.width !== fw || ca.height !== fh) { ca.width = fw; ca.height = fh; }
+  ca.getContext("2d").drawImage(S.ref.canvas, 0, 0);
+  const cd = $("cvAdrw"); if (cd.width !== g.rw || cd.height !== g.rh) { cd.width = g.rw; cd.height = g.rh; }
+  cd.getContext("2d").drawImage(g.Rcanvas, 0, 0);
+  placeHandles($("picAref"), S.mk.ref, fw, fh, "m", ["1", "2"]);
+  placeHandles($("picAdrw"), S.mk.drw, g.rw, g.rh, "m", ["1", "2"]);
+  $("info").innerHTML = "<p>Punktid 1 ja 2 peavad mõlemal pildil olema samas kohas. Ülejäänu (suurus, nihe ja pööre) arvutatakse nende järgi.</p>";
+}
+draggable($("picAref"), () => S.step === "align" ? S.mk.ref : null, () => S.ref.canvas,
+  (i, p) => { S.mk.ref[i] = p; TfromMarkers(); renderAlign(); });
+draggable($("picAdrw"), () => S.step === "align" ? S.mk.drw : null, () => S.geo.Rcanvas,
+  (i, p) => { S.mk.drw[i] = p; TfromMarkers(); renderAlign(); });
+$("autoAlign").addEventListener("click", async () => { await runAutoAlign(); renderAlign(); });
+
+/* ---------- samm 3: võrdlus ---------- */
+function cmpCanvasReady() {
+  const c = $("cmpCanvas"), fw = S.ref.w, fh = S.ref.h;
+  if (c.width !== fw || c.height !== fh) { c.width = fw; c.height = fh; }
+  return c.getContext("2d");
+}
+function blurCached(key, v, r) {
+  const c = S.cmp.cache; if (c[key] && c[key].r === r) return c[key].v;
+  const b = blur(v, S.ref.w, S.ref.h, r); c[key] = { r, v: b }; return b;
+}
+function drawDiff(g) {
+  const fw = S.ref.w, fh = S.ref.h, { Dn, M } = S.cmp, A = S.ref.A;
+  const r = Math.max(1, Math.round(+$("squint").value / 100 * Math.max(fw, fh) / 55));
+  const ab = blurCached("a", A, r), db = blurCached("d", Dn, r);
+  const t = 0.3 - 0.25 * (+$("sens").value / 100);
+  const im = g.createImageData(fw, fh), d = im.data;
+  for (let p = 0, i = 0; p < Dn.length; p++, i += 4) {
+    if (!M[p]) { d[i] = d[i + 1] = d[i + 2] = 247; d[i + 3] = 255; continue; }
+    const base = 255 - (255 - Dn[p] * 255) * 0.32;
+    let R = base, G = base, B = base;
+    const df = db[p] - ab[p], a = Math.abs(df);
+    if (a > t) {
+      const al = Math.min(1, (a - t) / 0.18) * 0.88;
+      const c = df < 0 ? [205, 45, 40] : [40, 100, 220];
+      R = base * (1 - al) + c[0] * al; G = base * (1 - al) + c[1] * al; B = base * (1 - al) + c[2] * al;
+    }
+    d[i] = R; d[i + 1] = G; d[i + 2] = B; d[i + 3] = 255;
+  }
+  g.putImageData(im, 0, 0);
+}
+function drawContours(g) {
+  const fw = S.ref.w, fh = S.ref.h, { Dn, M } = S.cmp, A = S.ref.A, L = +$("clevels").value;
+  const r = Math.max(2, Math.round(Math.max(fw, fh) / 125));
+  const key = "c" + L + "_" + r, c = S.cmp.cache;
+  if (!c[key]) c[key] = { a: contourMask(A, fw, fh, L, null, r), d: contourMask(Dn, fw, fh, L, M, r) };
+  const { a: ca, d: cd } = c[key];
+  const base = S.cbase === "ref" ? A : Dn, showA = $("cRef").checked, showD = $("cDrw").checked;
+  const im = g.createImageData(fw, fh), d = im.data;
+  const thick = Math.max(1, Math.round(Math.max(fw, fh) / 600));
+  const has = (m, p) => {
+    if (m[p]) return true;
+    if (thick < 2) return false;
+    const x = p % fw;
+    return (x > 0 && m[p - 1]) || (p >= fw && m[p - fw]) || (x > 0 && p >= fw && m[p - fw - 1]);
+  };
+  for (let p = 0, i = 0; p < A.length; p++, i += 4) {
+    let v = (S.cbase === "drw" && !M[p]) ? 247 : 255 - (255 - base[p] * 255) * 0.42;
+    let R = v, G = v, B = v;
+    if (showA && has(ca, p)) { R = 215; G = 40; B = 35; }
+    if (showD && has(cd, p)) { R = 30; G = 100; B = 225; }
+    d[i] = R; d[i + 1] = G; d[i + 2] = B; d[i + 3] = 255;
+  }
+  g.putImageData(im, 0, 0);
+}
+function visualSwap() { return $("vMirror").checked !== $("vFlip").checked; }
+function setBadges(l, r) {
+  const sw = visualSwap(); if (sw) [l, r] = [r, l];
+  $("badgeL").hidden = !l; $("badgeL").textContent = l || "";
+  $("badgeR").hidden = !r; $("badgeR").textContent = r || "";
+}
+function positionBadges() {
+  const fr = $("frame").getBoundingClientRect(), cr = $("cmpCanvas").getBoundingClientRect();
+  $("badgeL").style.left = (cr.left - fr.left + 10) + "px"; $("badgeL").style.top = (cr.top - fr.top + 10) + "px";
+  $("badgeR").style.right = (fr.right - cr.right + 10) + "px"; $("badgeR").style.top = (cr.top - fr.top + 10) + "px";
+}
+function renderCompare() {
+  ensureCmp();
+  const g = cmpCanvasReady(), fw = S.ref.w, fh = S.ref.h, { cvA, cvD } = S.cmp;
+  g.globalAlpha = 1; g.clearRect(0, 0, fw, fh);
+  const m = S.mode;
+  document.querySelectorAll("[data-for]").forEach(x => x.hidden = x.dataset.for !== m);
+  let info = "";
+  if (m === "diff") {
+    drawDiff(g); setBadges("", "");
+    info = `<span class="key"><i class="warm"></i>joonistus on tumedam</span><span class="key"><i class="cool"></i>joonistus on heledam</span><p>Kui punane ja sinine laik on kõrvuti, on vorm tõenäoliselt nihkes. Tumeda detaili (silm, nina alune vari) puhul näitab punane, kuhu sa selle joonistasid, ja sinine, kus see originaalis on.</p>`;
+  } else if (m === "contours") {
+    drawContours(g); setBadges("", "");
+    info = `<span class="key"><i class="lw"></i>originaal</span><span class="key"><i class="lc"></i>sinu joonistus</span><p>Kus punane ja sinine joon kattuvad, on vorm õige. Kus need lähevad lahku, näitab vahe, kui palju ja mis suunas tuleb parandada.</p>`;
+  } else if (m === "split") {
+    const x = Math.round(S.split * fw);
+    g.drawImage(cvA, 0, 0);
+    g.save(); g.beginPath(); g.rect(0, 0, x, fh); g.clip(); g.drawImage(cvD, 0, 0); g.restore();
+    g.fillStyle = "#ffffff"; g.fillRect(x - 2, 0, 4, fh); g.fillStyle = "#1d4f7c"; g.fillRect(x - 0.5, 0, 1, fh);
+    g.beginPath(); g.arc(x, fh / 2, 14, 0, Math.PI * 2); g.fillStyle = "#ffffff"; g.fill(); g.strokeStyle = "#1d4f7c"; g.lineWidth = 1.5; g.stroke();
+    g.fillStyle = "#1d4f7c"; g.beginPath(); g.moveTo(x - 9, fh / 2); g.lineTo(x - 3, fh / 2 - 5); g.lineTo(x - 3, fh / 2 + 5); g.fill();
+    g.beginPath(); g.moveTo(x + 9, fh / 2); g.lineTo(x + 3, fh / 2 - 5); g.lineTo(x + 3, fh / 2 + 5); g.fill();
+    setBadges("Joonistus", "Originaal");
+    info = "<p>Lohista piiri üle näo. Jälgi, kas jooned (kulmud, ninaots, suunurgad, lõuajoon) jätkuvad üle piiri katkematult.</p>";
+  } else if (m === "blink") {
+    g.drawImage(S.blinkShow ? cvA : cvD, 0, 0);
+    setBadges(S.blinkShow ? "Originaal" : "Joonistus", "");
+    startBlink();
+    info = "<p>Kõik, mis vahetusel hüppab või liigub, on nihkes. Paigal püsivad osad on õiged.</p>";
+  } else if (m === "overlay") {
+    const t = +$("mix").value / 100;
+    g.drawImage(cvD, 0, 0); g.globalAlpha = t; g.drawImage(cvA, 0, 0); g.globalAlpha = 1;
+    setBadges(`Joonistus ${Math.round((1 - t) * 100)}% · Originaal ${Math.round(t * 100)}%`, "");
+    info = "<p>Kahekordsed kontuurid (topeltsilm, kaks lõuajoont) näitavad, kus joonistus originaalist erineb.</p>";
+  }
+  const wrap = $("cmpWrap");
+  const sx = $("vMirror").checked ? -1 : 1, fl = $("vFlip").checked;
+  wrap.style.transform = `scale(${fl ? -sx : sx}, ${fl ? -1 : 1})`;
+  const cw = $("cmpCanvas").getBoundingClientRect().width || 600;
+  wrap.style.filter = $("vSquint").checked ? `blur(${Math.max(3, cw / 110).toFixed(1)}px)` : "none";
+  $("info").innerHTML = info;
+  positionBadges();
+}
+function startBlink() {
+  if (S.blinkTimer || !S.blinkOn) return;
+  S.blinkTimer = setInterval(() => { S.blinkShow ^= 1; if (S.step === "compare" && S.mode === "blink") renderCompare(); }, +$("blinkMs").value);
+}
+function stopBlink() { clearInterval(S.blinkTimer); S.blinkTimer = 0; }
+function updBlinkBtn() { $("blinkPlay").textContent = S.blinkOn ? "Peata" : "Käivita"; }
+$("blinkPlay").addEventListener("click", () => { S.blinkOn = !S.blinkOn; updBlinkBtn(); stopBlink(); renderCompare(); });
+$("blinkStep").addEventListener("click", () => { S.blinkOn = false; updBlinkBtn(); stopBlink(); S.blinkShow ^= 1; renderCompare(); });
+$("blinkMs").addEventListener("input", () => { stopBlink(); if (S.mode === "blink") renderCompare(); });
+updBlinkBtn();
+
+document.querySelectorAll("[data-mode]").forEach(b => b.addEventListener("click", () => {
+  S.mode = b.dataset.mode;
+  document.querySelectorAll("[data-mode]").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+  stopBlink(); renderCompare();
+}));
+document.querySelectorAll("[data-cbase]").forEach(b => b.addEventListener("click", () => {
+  S.cbase = b.dataset.cbase;
+  document.querySelectorAll("[data-cbase]").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+  renderCompare();
+}));
+const fmt = {
+  sens: v => v + "%", squint: v => v == 0 ? "väljas" : v + "%", clevels: v => v, splitX: v => v + "%",
+  blinkMs: v => (v / 1000).toFixed(1).replace(".", ",") + " s", mix: v => v + "%"
+};
+for (const id in fmt) {
+  const el = $(id), out = $(id + "V"), upd = () => out.textContent = fmt[id](+el.value);
+  upd();
+  el.addEventListener("input", () => { upd(); if (id === "splitX") S.split = +el.value / 100; if (S.step === "compare" && id !== "blinkMs") renderCompare(); });
+}
+["cRef", "cDrw", "vMirror", "vFlip", "vSquint"].forEach(id => $(id).addEventListener("change", () => S.step === "compare" && renderCompare()));
+// kardina lohistamine pildil
+(() => {
+  const c = $("cmpCanvas"); let on = false;
+  const setX = e => {
+    const r = c.getBoundingClientRect(); let x = (e.clientX - r.left) / r.width;
+    if ($("vMirror").checked !== $("vFlip").checked) x = 1 - x;
+    S.split = Math.max(0, Math.min(1, x)); $("splitX").value = Math.round(S.split * 100); $("splitXV").textContent = fmt.splitX(+$("splitX").value);
+    renderCompare();
+  };
+  c.addEventListener("pointerdown", e => { if (S.mode !== "split") return; on = true; c.setPointerCapture(e.pointerId); setX(e); });
+  c.addEventListener("pointermove", e => { if (on) setX(e); });
+  c.addEventListener("pointerup", () => on = false); c.addEventListener("pointercancel", () => on = false);
+})();
+window.addEventListener("resize", () => { if (S.step === "compare") positionBadges(); });
+
+/* ---------- käivitus ---------- */
+(async () => {
+  if (!SAMPLE_REF || !SAMPLE_DRW) {
+    S.isSample = false; $("sampleNote").hidden = true;
+    $("nameRef").textContent = "valimata"; $("nameDrw").textContent = "valimata";
+    S.step = "corners"; showEmpty(); showStatus("");
+    return;
+  }
+  showStatus("Laen näidist…");
+  await setRef(SAMPLE_REF, "näidisfoto");
+  await setDrawing(SAMPLE_DRW, "näidis: simuleeritud joonistus");
+  await goto("compare");
+  showStatus("");
+})();
+</script>
+
+<nav style="max-width:1360px;margin:8px auto 0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 28px;display:flex;flex-wrap:wrap;gap:6px 18px;font:13px/1.4 system-ui,-apple-system,sans-serif;border-top:1px solid var(--line)"><a href="index.html" style="color:var(--muted)">Kalkeerkaamera</a><a href="toonikaart.html" style="color:var(--muted)">Toonikaart</a><a href="kontroll.html" style="color:var(--muted)">Joonistuse kontroll</a></nav>
+</body></html>
