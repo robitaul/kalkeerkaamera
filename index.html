@@ -129,6 +129,9 @@ body.clean .dock, body.clean .top{display:none}
 .tip{font-size:13px;color:var(--muted)}
 .notice{color:var(--fg)}
 code{font-family:var(--f-mono);font-size:12px;background:rgba(255,255,255,.08);padding:1px 5px;border-radius:4px}
+/* Camera list */
+.camlist{display:grid;gap:6px}
+.camlist .btn{justify-content:flex-start;white-space:normal;text-align:left;min-height:42px;font-weight:500}
 /* Projects */
 .plist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .prow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px;border:1px solid var(--edge);border-radius:14px;background:rgba(255,255,255,.03);padding:6px}
@@ -245,9 +248,11 @@ code{font-family:var(--f-mono);font-size:12px;background:rgba(255,255,255,.08);p
       <button role="radio" aria-checked="false" data-mode="lightbox">Valguslaud</button>
     </div>
     <p class="fine" id="modeNote">Valguslaud: pilt on ekraanil heledalt ja paber käib ekraani peale. Kaamerat pole vaja.</p>
-    <div class="grid2">
-      <button class="btn" id="projMenuBtn">Projektid</button>
-      <button class="btn" id="flipBtn" data-modes="camera">Vaheta kaamerat</button>
+    <button class="btn" id="projMenuBtn">Projektid</button>
+    <div id="camBox" hidden>
+      <p class="label">Kaamera</p>
+      <div class="camlist" id="camList"></div>
+      <p class="fine">Vali üks kindel tagakaamera. iPhone'i liitkaamera („Dual“, „Triple“) vahetab lähedal objektiivi ise ja pilt hüppab paberilt ära. Lainurkkaamera („Ultra Wide“) mahutab lähedalt rohkem paberit.</p>
     </div>
     <p class="label">Pilt</p>
     <div class="grid2">
@@ -1692,8 +1697,10 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
   // always solved against the paper itself; markers, when visible, correct any drift.
   function createPlaneTracker(){
     const MAXF=180, BORDER=12, CELL=32, U8=jsfeat.U8_t|jsfeat.C1_t;
-    let fw=0, fh=0, prev=null, curr=null, havePrev=false, feats=[], kps=[], sinceFill=0;
-    jsfeat.fast_corners.set_threshold(16);
+    let fw=0, fh=0, prev=null, curr=null, havePrev=false, feats=[], kps=[], sinceFill=0, region=null;
+    // only points on the drawing board count: the sheet plus a margin around it (the board it is taped to)
+    const inRegion=(x,y)=>{ if(!region) return true;
+      for(let i=0;i<4;i++){ const a=region[i], b=region[(i+1)%4]; if((b[0]-a[0])*(y-a[1])-(b[1]-a[1])*(x-a[0]) < 0) return false; } return true; };
     function alloc(w,h){
       fw=w; fh=h; havePrev=false; feats=[];
       prev=new jsfeat.pyramid_t(4); curr=new jsfeat.pyramid_t(4); prev.allocate(w,h,U8); curr.allocate(w,h,U8);
@@ -1702,29 +1709,45 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
     function replenish(H, s, w, h){
       const cols=Math.ceil(w/CELL), rows=Math.ceil(h/CELL), occ=new Uint8Array(cols*rows);
       for(const f of feats) occ[((f.y/CELL)|0)*cols+((f.x/CELL)|0)]++;
-      const cnt=Math.min(jsfeat.fast_corners.detect(curr.data[0], kps, BORDER), kps.length);
-      // one pass: keep the strongest corner of each free cell
-      const best=new Int32Array(cols*rows).fill(-1);
-      for(let k=0;k<cnt;k++){ const p=kps[k];
-        if(!(p.x>=BORDER && p.y>=BORDER && p.x<w-BORDER && p.y<h-BORDER)) continue;
-        const ci=((p.y/CELL)|0)*cols+((p.x/CELL)|0);
-        if(occ[ci]>=2) continue;
-        if(best[ci]<0 || p.score>kps[best[ci]].score) best[ci]=k; }
-      const cand=[]; for(let ci=0;ci<best.length;ci++) if(best[ci]>=0) cand.push(best[ci]);
-      cand.sort((a,b)=>kps[b].score-kps[a].score);
       const Hi=inv(H);
-      for(const k of cand){
-        if(feats.length>=MAXF) break;
-        const p=kps[k]; const q=apply(Hi,p.x*s,p.y*s); feats.push({x:p.x, y:p.y, px:q[0], py:q[1]});
+      // plain wood or paper has little detail: when strong corners are scarce, accept fainter ones
+      for(const thr of [16, 8]){
+        jsfeat.fast_corners.set_threshold(thr);
+        const cnt=Math.min(jsfeat.fast_corners.detect(curr.data[0], kps, BORDER), kps.length);
+        // one pass: keep the strongest corner of each free cell on the board
+        const best=new Int32Array(cols*rows).fill(-1);
+        for(let k=0;k<cnt;k++){ const p=kps[k];
+          if(!(p.x>=BORDER && p.y>=BORDER && p.x<w-BORDER && p.y<h-BORDER)) continue;
+          const ci=((p.y/CELL)|0)*cols+((p.x/CELL)|0);
+          if(occ[ci]>=2) continue;
+          if(best[ci]<0 || p.score>kps[best[ci]].score) best[ci]=k; }
+        const cand=[]; for(let ci=0;ci<best.length;ci++) if(best[ci]>=0){ const p=kps[best[ci]], q=apply(Hi,p.x*s,p.y*s); if(inRegion(q[0],q[1])) cand.push([best[ci], q]); }
+        cand.sort((a,b)=>kps[b[0]].score-kps[a[0]].score);
+        for(const [k,q] of cand){
+          if(feats.length>=MAXF) break;
+          const p=kps[k]; feats.push({x:p.x, y:p.y, px:q[0], py:q[1]}); occ[((p.y/CELL)|0)*cols+((p.x/CELL)|0)]++;
+        }
+        if(feats.length>=40) break;
       }
     }
     return {
       reset(){ havePrev=false; feats=[]; },
+      // the sheet in paper coordinates; the board around it is included by widening it
+      setRegion(q){ if(!q){ region=null; return; }
+        const cx=(q[0][0]+q[1][0]+q[2][0]+q[3][0])/4, cy=(q[0][1]+q[1][1]+q[2][1]+q[3][1])/4;
+        region=q.map(p=>[cx+(p[0]-cx)*1.35, cy+(p[1]-cy)*1.35]);
+        let a=0; for(let i=0;i<4;i++){ const p=region[i], r=region[(i+1)%4]; a+=p[0]*r[1]-r[0]*p[1]; }
+        if(a<0) region.reverse(); },
       // rgba: frame pixels (w x h); s: video px per frame px; Hprev: last paper->video pose;
       // mk: {src,dst} marker corner correspondences (paper -> video) or null
-      step(rgba, w, h, s, Hprev, mk){
+      // lines: sheet edges seen only in part: [{A,B (paper), t0,t1 (visible part), ln (video px line)}]
+      step(rgba, w, h, s, Hprev, mk, lines){
         if(w!==fw || h!==fh) alloc(w,h);
         jsfeat.imgproc.grayscale(rgba, w, h, curr.data[0], jsfeat.COLOR_RGBA2GRAY);
+        { // the phone keeps adjusting exposure: bring every frame to the same average brightness
+          const g=curr.data[0].data, n=w*h; let m=0, c=0; for(let i=0;i<n;i+=13){ m+=g[i]; c++; } m/=c;
+          const f=Math.max(.4, Math.min(2.5, 120/Math.max(1,m)));
+          if(Math.abs(f-1)>.03) for(let i=0;i<n;i++){ const v=g[i]*f; g[i]=v>255?255:v; } }
         curr.build(curr.data[0], true);
         let tracked=[];
         if(havePrev && feats.length){
@@ -1745,13 +1768,35 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
           flowOk = (x1-x0)*(y1-y0) >= .06*w*h;
         }
         let H=Hprev, mode='lost';
-        if(mk && mk.src.length){
+        if(lines && lines.length && !(mk && mk.src.length>=16)){
+          // Part of the sheet's outline is in view. Each visible edge must line up with its paper edge;
+          // surface points, markers and (weakly) the last pose settle what the edges alone cannot.
+          mode='markers';
+          const flowUse = !!flow && flow.count>=10 && flow.count>=.5*tracked.length;
+          let Hc = flowUse ? flow.H : Hprev;
+          const LINE_W = (typeof globalThis!=='undefined' && globalThis.LINE_W) || 15;   // an edge decides its own direction
+          for(let it=0; it<3; it++){
+            const S=[], D=[], Hci=inv(Hc);
+            if(flowUse) tracked.forEach((f,i)=>{ if(flow.mask[i]){ S.push([f.px,f.py]); D.push([f.x*s,f.y*s]); } });
+            if(mk) for(let r=0;r<6;r++) for(let i=0;i<mk.src.length;i++){ S.push(mk.src[i]); D.push(mk.dst[i]); }
+            for(const L of lines){
+              for(let j=0;j<=6;j++){
+                const t=L.t0+(L.t1-L.t0)*j/6, P=[L.A[0]+(L.B[0]-L.A[0])*t, L.A[1]+(L.B[1]-L.A[1])*t];
+                const q=apply(Hc,P[0],P[1]), k=(q[0]-L.ln.mx)*L.ux+(q[1]-L.ln.my)*L.uy, on=[L.ln.mx+L.ux*k, L.ln.my+L.uy*k];
+                for(let r=0;r<LINE_W;r++){ S.push(P); D.push(on); }
+              }
+            }
+            for(const c of [[0,0],[w*s,0],[w*s,h*s],[0,h*s]]){ S.push(apply(Hci,c[0],c[1])); D.push(c); }   // keep what nothing else decides
+            Hc = solveH(S,D) || Hc;
+          }
+          H = Hc;
+        } else if(mk && mk.src.length){
           mode='markers';
           const Hm = solveH(mk.src,mk.dst);
           // Blend surface points with the markers so the pose does not jump between sources.
           // With two or more markers, the markers win outright only when the surface points have drifted.
           let blend = flowOk;
-          if(blend && Hm && mk.src.length>=8){
+          if(blend && Hm && mk.src.length>=4){
             let e=0; for(let i=0;i<mk.src.length;i++){ const p=apply(flow.H, mk.src[i][0], mk.src[i][1]); e+=Math.hypot(p[0]-mk.dst[i][0], p[1]-mk.dst[i][1]); }
             blend = e/mk.src.length < 2*s;
           }
@@ -1831,15 +1876,16 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
           if(!inside) continue;
           const G=j=>L[j-1]-L[j+1];          // light inside -> dark outside
           let bj=0, bg=0; for(let j=1;j<L.length-1;j++){ const g=G(j); if(g>bg){ bg=g; bj=j; } }
-          if(bg<22) continue;
-          // the far side of a real sheet edge is the desk: much darker than the paper (a hand is not)
           const lin=L[Math.max(0,bj-3)], lout=L[Math.min(L.length-1,bj+3)], ratio=lout/Math.max(1,lin);
+          if(bg<Math.max(8,.1*lin)) continue;
+          // the far side of a real sheet edge is the desk: much darker than the paper (a hand is not)
           if(learn){ ratios.push(ratio); lums.push(lin); sr.push(ratio); sl.push(lin); }
-          else if(ratio>(sideRatioMax?sideRatioMax[i]:ratioMax) || lin<.72*(sideLum?sideLum[i]:paperLum)) continue;   // a hand is darker than paper and lighter than the desk
+          else if(ratio>(sideRatioMax?sideRatioMax[i]:ratioMax)) continue;
           const gm=bj>1?G(bj-1):bg, gp=bj<L.length-2?G(bj+1):bg, den=gm-2*bg+gp;
           const off = Math.abs(den)>1e-6 ? Math.max(-1,Math.min(1,.5*(gm-gp)/den)) : 0;
-          const k=bj-band-1+off; pts.push([px+nx*k, py+ny*k]);
+          const k=bj-band-1+off; pts.push([px+nx*k, py+ny*k, lin]);
         }
+        if(!learn) brightnessCheck(pts, i);
         let ln = pts.length >= Math.max(6, N*.25) ? fitLine(pts) : null;
         if(ln){ const ang=Math.abs(ln.ux*dy/len - ln.uy*dx/len); if(ang>.12) ln=null; }   // must stay near the expected direction
         if(!ln) return null;
@@ -1860,6 +1906,101 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
         out.stats = { consistency: Math.min(...ins)/Math.max(...ins), worstRatio: Math.max(...outs), ratioMed: med(ratios), lumMed: med(lums), ins, outs };
       }
       return out;
+    }
+    // The phone keeps changing its exposure, so paper brightness is judged within the current frame:
+    // points clearly darker than the typical edge point of this side (a hand, a shadow) are dropped.
+    function brightnessCheck(pts, i){
+      if(pts.length<6) return;
+      const ls=pts.map(p=>p[2]).sort((x,y)=>x-y), typical=ls[Math.floor(ls.length*.7)];
+      for(let j=pts.length-1;j>=0;j--) if(pts[j][2] < .72*typical) pts.splice(j,1);
+      for(const p of pts) p.length=2;
+    }
+    // Each edge on its own, using only the part inside the view: for when the sheet is partly out of view.
+    function followSides(d,w,h,q,band){
+      const cx=(q[0][0]+q[1][0]+q[2][0]+q[3][0])/4, cy=(q[0][1]+q[1][1]+q[2][1]+q[3][1])/4, m=band+3, out=[];
+      for(let i=0;i<4;i++){
+        const a=q[i], b=q[(i+1)%4], dx=b[0]-a[0], dy=b[1]-a[1], len=Math.hypot(dx,dy);
+        if(len<30){ out.push(null); continue; }
+        // the part of this edge inside the view (Liang-Barsky clipping)
+        let t0=0, t1=1;
+        for(const [p,qq] of [[-dx,a[0]-m],[dx,w-m-a[0]],[-dy,a[1]-m],[dy,h-m-a[1]]]){
+          if(Math.abs(p)<1e-9){ if(qq<0){ t0=1; t1=0; } continue; }
+          const r=qq/p; if(p<0) t0=Math.max(t0,r); else t1=Math.min(t1,r); }
+        t0=Math.max(t0,.03); t1=Math.min(t1,.97);
+        if(t1-t0 < 40/len){ out.push(null); continue; }
+        let nx=-dy/len, ny=dx/len;
+        if(((a[0]+b[0])/2-cx)*nx+((a[1]+b[1])/2-cy)*ny<0){ nx=-nx; ny=-ny; }
+        const vis=(t1-t0)*len, N=Math.max(8, Math.min(70, vis/5|0)), pts=[], L=new Float32Array(2*band+3);
+        for(let s2=0;s2<=N;s2++){
+          const t=t0+(t1-t0)*s2/N, px=a[0]+dx*t, py=a[1]+dy*t;
+          let inside=true;
+          for(let k=-band-1, j=0; k<=band+1; k++, j++){ const x=px+nx*k, y=py+ny*k;
+            if(x<1||y<1||x>=w-2||y>=h-2){ inside=false; break; } L[j]=lum(d,w,x,y); }
+          if(!inside) continue;
+          const G=j=>L[j-1]-L[j+1];
+          let bj=0, bg=0; for(let j=1;j<L.length-1;j++){ const g=G(j); if(g>bg){ bg=g; bj=j; } }
+          const lin=L[Math.max(0,bj-3)], lout=L[Math.min(L.length-1,bj+3)], ratio=lout/Math.max(1,lin);
+          if(bg<Math.max(8,.1*lin)) continue;
+          if(ratio>(sideRatioMax?sideRatioMax[i]:ratioMax)) continue;
+          const gm=bj>1?G(bj-1):bg, gp=bj<L.length-2?G(bj+1):bg, den=gm-2*bg+gp;
+          const off=Math.abs(den)>1e-6 ? Math.max(-1,Math.min(1,.5*(gm-gp)/den)) : 0;
+          const k=bj-band-1+off; pts.push([px+nx*k, py+ny*k, lin]);
+        }
+        brightnessCheck(pts, i);
+        let ln = pts.length >= Math.max(6, .45*(N+1)) ? fitLine(pts) : null;
+        if(ln){ const ang=Math.abs(ln.ux*dy/len - ln.uy*dx/len); if(ang>.12) ln=null; }
+        if(ln){ const off=Math.abs((ln.mx-a[0])*nx+(ln.my-a[1])*ny); if(off>band) ln=null; }
+        out.push(ln ? { ln, t0, t1 } : null);
+      }
+      return out;
+    }
+    // Getting back on the paper with only part of the sheet in view: find a corner of the sheet, i.e.
+    // two long straight edges of a light region meeting inside the view (edges along the view's border don't count).
+    function findCorner(d,w,h){
+      const { k, gw, gh, N } = prepare(d,w,h);
+      lab.fill(0);
+      const seeds=[];
+      for(const [fx,fy] of [[.5,.5],[.3,.3],[.7,.3],[.3,.7],[.7,.7],[.5,.25],[.5,.75],[.25,.5],[.75,.5]]){
+        const x0=(fx*gw)|0, y0=(fy*gh)|0; let bi=y0*gw+x0, bv=-1;
+        for(let y=Math.max(0,y0-8);y<=Math.min(gh-1,y0+8);y++) for(let x=Math.max(0,x0-8);x<=Math.min(gw-1,x0+8);x++){ const v=sm[y*gw+x]; if(v>bv){ bv=v; bi=y*gw+x; } }
+        seeds.push(bi); }
+      let id=0; const found=[];
+      for(const seed of seeds){
+        if(lab[seed]) continue;
+        const n=grow(seed, gw, gh, ++id);
+        if(n<.08*N || n>.97*N) continue;
+        if(cleanRegion(id, gw, gh) < .06*N) continue;
+        for(const c of CV.findContours(bin, buf)){
+          if(c.hole || c.length<80) continue;
+          let rest=[]; for(let i=0;i<c.length;i+=2){ const p=c[i]; if(p.x>3 && p.y>3 && p.x<gw-4 && p.y<gh-4) rest.push([p.x,p.y]); }
+          const lines=[];
+          for(let li=0; li<3 && rest.length>=25; li++){
+            let bl=null, bn=0;
+            for(let it=0; it<140; it++){
+              const p=rest[(Math.random()*rest.length)|0], q=rest[(Math.random()*rest.length)|0];
+              const dx=q[0]-p[0], dy=q[1]-p[1], len=Math.hypot(dx,dy); if(len<15) continue;
+              const nx=-dy/len, ny=dx/len; let n2=0; for(const r of rest) if(Math.abs((r[0]-p[0])*nx+(r[1]-p[1])*ny)<1.6) n2++;
+              if(n2>bn){ bn=n2; bl=[p,nx,ny]; } }
+            if(!bl || bn<25) break;
+            const [p,nx,ny]=bl, inl=[], keep=[];
+            for(const r of rest){ const dd=Math.abs((r[0]-p[0])*nx+(r[1]-p[1])*ny); if(dd<1.6) inl.push(r); if(dd>=3) keep.push(r); }
+            const ln=fitLine(inl); if(!ln) break; ln.pts=inl; lines.push(ln); rest=keep;
+          }
+          for(let a=0;a<lines.length;a++) for(let b=a+1;b<lines.length;b++){
+            const A=lines[a], B=lines[b], cr=A.ux*B.uy-A.uy*B.ux; if(Math.abs(cr)<.5) continue;          // roughly square corner
+            const m=meet(A,B); if(!m || m[0]<4 || m[1]<4 || m[0]>gw-5 || m[1]>gh-5) continue;
+            // both edges must actually start at the corner: their points lie on one side of it
+            const dirOf=L=>{ let sp=0; for(const r of L.pts) sp+=(r[0]-m[0])*L.ux+(r[1]-m[1])*L.uy; const sg=sp>=0?1:-1;
+              let near=1e9; for(const r of L.pts) near=Math.min(near, Math.hypot(r[0]-m[0], r[1]-m[1])); return { u:[L.ux*sg, L.uy*sg], near, n:L.pts.length }; };
+            const da=dirOf(A), db=dirOf(B);
+            if(da.near>6 || db.near>6) continue;
+            const score=da.n+db.n, pt=[m[0]*k+(k-1)/2, m[1]*k+(k-1)/2];
+            if(!found.some(f=>Math.hypot(f.pt[0]-pt[0], f.pt[1]-pt[1])<20)) found.push({ score, pt, dirs:[da.u, db.u] });
+          }
+        }
+      }
+      found.sort((a,b)=>b.score-a.score);
+      return found.length ? found : null;
     }
     function learnFrom(stats){
       if(!stats || !Number.isFinite(stats.ratioMed)) return;
@@ -1888,11 +2029,11 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
     // Uneven light across the sheet changes slowly; the sheet's edge is a sudden drop.
     let sm=null, tmp=null, lab=null, qbuf=null, mk=null, mk2=null, integ=null;
     function grow(seed, gw, gh, id){
-      const L0=sm[seed], floor=.55*L0; let head=0, tail=0, n=0;
+      const L0=sm[seed], floor=.55*L0, tol=Math.max(4, .045*L0); let head=0, tail=0, n=0;
       lab[seed]=id; qbuf[tail++]=seed;
       while(head<tail){
         const p=qbuf[head++], x=p%gw, v=sm[p]; n++;
-        const tryN=q=>{ if(lab[q]) return; const u=sm[q]; if(u<floor || Math.abs(u-v)>9) return; lab[q]=id; qbuf[tail++]=q; };
+        const tryN=q=>{ if(lab[q]) return; const u=sm[q]; if(u<floor || Math.abs(u-v)>tol) return; lab[q]=id; qbuf[tail++]=q; };
         if(x>0) tryN(p-1); if(x<gw-1) tryN(p+1); if(p>=gw) tryN(p-gw); if(p<gw*(gh-1)) tryN(p+gw);
       }
       return n;
@@ -2009,7 +2150,7 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
       if(!(a1>.4*a0 && a1<a0)) return q;
       return out;
     }
-    function find(d,w,h){
+    function prepare(d,w,h){
       const k=Math.max(1, Math.round(w/320)), gw=(w/k)|0, gh=(h/k)|0, N=gw*gh;
       if(!gray || gray.width!==gw || gray.height!==gh){
         gray=new CV.Image(gw,gh,new Uint8ClampedArray(N)); bin=new CV.Image(gw,gh,new Uint8ClampedArray(N)); buf=new Array((gw+2)*(gh+2));
@@ -2026,6 +2167,10 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
       for(let x=0;x<gw;x++) sm[x]=(tmp[x]+tmp[x+gw])/2;
       for(let i=gw;i<N-gw;i++) sm[i]=(tmp[i-gw]+tmp[i]+tmp[i+gw])/3;
       for(let i=N-gw;i<N;i++) sm[i]=(tmp[i-gw]+tmp[i])/2;
+      return { k, gw, gh, N };
+    }
+    function find(d,w,h){
+      const { k, gw, gh, N } = prepare(d,w,h);
       const candidates=[];
       // 1) light regions grown from the brightest spots of a coarse grid
       lab.fill(0);
@@ -2082,7 +2227,7 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
         if(c<bc){ bc=c; best=[0,1,2,3].map(i=>q[(i+r)%4]); } }
       return best;
     }
-    return { find, follow, align };
+    return { find, follow, followSides, findCorner, align };
   }
   /* PAPER-END */
 
@@ -2509,11 +2654,15 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
     starting = true; setChip('Kaamera käivitub…','muted');
     try{
       if(!navigator.mediaDevices?.getUserMedia) throw Object.assign(new Error('no camera api'), {name:'Unsupported'});
-      const s = await navigator.mediaDevices.getUserMedia({ audio:false,
-        video:{ facingMode:{ ideal:facing }, width:{ ideal:3840 }, height:{ ideal:2160 } } });
+      const want = camId || store.get('camId');
+      const size = { width:{ ideal:3840 }, height:{ ideal:2160 } };
+      let s;
+      try{ s = await navigator.mediaDevices.getUserMedia({ audio:false, video: want ? { deviceId:{ exact:want }, ...size } : { facingMode:{ ideal:'environment' }, ...size } }); }
+      catch(e){ if(!want) throw e; store.del('camId'); camId=null; s = await navigator.mediaDevices.getUserMedia({ audio:false, video:{ facingMode:{ ideal:'environment' }, ...size } }); }
       if(st.mode!=='camera'){ s.getTracks().forEach(t=>t.stop()); return; }
       stream = s; video.srcObject = stream; await video.play().catch(()=>{});
       stage.classList.add('live'); wake(); startTracking();
+      listCameras(true);
     }catch(err){
       stream = null;
       const n = err && err.name;
@@ -2583,18 +2732,33 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
       for(const [id,p] of raw){ const ap=anchor.pts.get(id); if(!ap) continue; n++; for(let i=0;i<4;i++){ S.push(ap[i]); D.push(p[i]); } }
       if(look) anchor.matched = n;
       // the sheet's own edges: follow them from where the last pose says they are
-      let sheet = null;
+      let sheet = null, sheetSides = [];
+      if(plane && plane.regionFor !== anchor.paper){ plane.setRegion(anchor.paper); plane.regionFor = anchor.paper; }
       if(sheetT && anchor.paper){
         const pred = anchor.paper.map(p => { const v=apply(anchor.H,p[0],p[1]); return [v[0]/s, v[1]/s]; });
         let q = sheetT.follow(frame.data, dw, dh, pred, 16);
         if(!q && (anchor.lost || frameNo%4===0)){ const f = sheetT.find(frame.data, dw, dh); if(f) q = sheetT.align(f, pred); }
+        if(!q && anchor.lost && frameNo%3===0 && relocateByCorner(frame.data, dw, dh, s)) pred.splice(0, 4, ...anchor.paper.map(p => { const v=apply(anchor.H,p[0],p[1]); return [v[0]/s, v[1]/s]; }));
         if(q){ sheet = q.map(p=>[p[0]*s,p[1]*s]); for(let i=0;i<4;i++){ S.push(anchor.paper[i]); D.push(sheet[i]); } }
+        else {
+          // only part of the sheet in view: use whatever edges are visible
+          const sides = sheetT.followSides(frame.data, dw, dh, pred, 16);
+          sheetSides = sides.map((r,i) => r && {
+            A:anchor.paper[i], B:anchor.paper[(i+1)%4], t0:r.t0, t1:r.t1,
+            ln:{ mx:r.ln.mx*s, my:r.ln.my*s }, ux:r.ln.ux, uy:r.ln.uy }).filter(Boolean);
+          // where two neighbouring edges meet inside the view, that corner of the sheet is seen exactly
+          for(let i=0;i<4;i++){ const p1=sides[(i+3)%4], p2=sides[i]; if(!p1 || !p2) continue;
+            const l1=p1.ln, l2=p2.ln, den=l1.ux*l2.uy-l1.uy*l2.ux; if(Math.abs(den)<.5) continue;
+            const t=((l2.mx-l1.mx)*l2.uy-(l2.my-l1.my)*l2.ux)/den, cxy=[l1.mx+l1.ux*t, l1.my+l1.uy*t];
+            if(cxy[0]<8 || cxy[1]<8 || cxy[0]>dw-8 || cxy[1]>dh-8) continue;
+            S.push(anchor.paper[i]); D.push([cxy[0]*s, cxy[1]*s]); }
+        }
       }
       let res;
-      if(plane) res = plane.step(frame.data, dw, dh, s, anchor.H, S.length ? {src:S,dst:D} : null);
+      if(plane) res = plane.step(frame.data, dw, dh, s, anchor.H, S.length ? {src:S,dst:D} : null, sheetSides);
       else { const Hn = S.length ? solveH(S,D) : null; res = { H:Hn||anchor.H, mode:Hn?'markers':'init', n:0 }; }
       anchor.H = res.H; anchor.mode = res.mode;
-      anchor.via = res.mode==='lost' ? 'lost' : n ? 'markers' : sheet ? 'paper' : res.mode;
+      anchor.via = res.mode==='lost' ? 'lost' : n ? 'markers' : (sheet || sheetSides.length) ? 'paper' : res.mode;
       if(res.mode!=='lost'){
         anchor.lastSeen = now;
         const Hi = inv(res.H); let learned = false;
@@ -2609,6 +2773,40 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
       applyTransform();
     }
     drawHud(); updateChip();
+  }
+  // Lost: if a corner of the sheet is in view, work out which one from the last known pose and
+  // turn/shift the picture so that corner and its two edges line up again. Edges refine it next frames.
+  function relocateByCorner(data, dw, dh, s){
+    const cs = sheetT.findCorner(data, dw, dh); if(!cs) return false;
+    const P = anchor.paper, H = anchor.H, img = P.map(p => { const v=apply(H,p[0],p[1]); return [v[0]/s, v[1]/s]; });
+    const unit = (a,b) => { const dx=b[0]-a[0], dy=b[1]-a[1], l=Math.hypot(dx,dy)||1; return [dx/l, dy/l]; };
+    // which corner of the sheet is each one? judged by the directions of its two edges in the last known pose
+    const ident = c => { let bestI=-1, bestS=1.4, swap=false;
+      for(let i=0;i<4;i++){ const dp=unit(img[i], img[(i+3)%4]), dn=unit(img[i], img[(i+1)%4]), [a,b]=c.dirs;
+        const s1=a[0]*dp[0]+a[1]*dp[1]+b[0]*dn[0]+b[1]*dn[1], s2=b[0]*dp[0]+b[1]*dp[1]+a[0]*dn[0]+a[1]*dn[1];
+        if(s1>bestS){ bestS=s1; bestI=i; swap=false; } if(s2>bestS){ bestS=s2; bestI=i; swap=true; } }
+      return bestI<0 ? null : { i:bestI, swap, c }; };
+    const ids = cs.map(ident).filter(Boolean), uniq = ids.filter((x,j)=>ids.findIndex(y=>y.i===x.i)===j);
+    if(!uniq.length) return false;
+    let S;
+    if(uniq.length>=2){
+      // two corners: turn, shift and size follow from them exactly
+      const [u,v]=uniq, o1=img[u.i], o2=img[v.i], t1=u.c.pt, t2=v.c.pt;
+      const ox=o2[0]-o1[0], oy=o2[1]-o1[1], tx=t2[0]-t1[0], ty=t2[1]-t1[1], den=ox*ox+oy*oy;
+      if(den<100) return false;
+      const a=(tx*ox+ty*oy)/den, b=(ty*ox-tx*oy)/den, sc=Math.hypot(a,b);
+      if(sc<.3 || sc>3) return false;
+      S=[a,-b, t1[0]*s-(a*o1[0]*s-b*o1[1]*s), b,a, t1[1]*s-(b*o1[0]*s+a*o1[1]*s), 0,0,1];
+    } else {
+      const { i, swap, c } = uniq[0], dp=unit(img[i], img[(i+3)%4]), dn=unit(img[i], img[(i+1)%4]);
+      const [a,b] = swap ? [c.dirs[1], c.dirs[0]] : c.dirs;
+      const ang = (Math.atan2(a[1],a[0])-Math.atan2(dp[1],dp[0]) + Math.atan2(b[1],b[0])-Math.atan2(dn[1],dn[0])) / 2;
+      const th = Math.atan2(Math.sin(ang), Math.cos(ang)), co=Math.cos(th), si=Math.sin(th);
+      const o=[img[i][0]*s, img[i][1]*s], t=[c.pt[0]*s, c.pt[1]*s];
+      S = [co,-si, t[0]-(co*o[0]-si*o[1]), si,co, t[1]-(si*o[0]+co*o[1]), 0,0,1];
+    }
+    anchor.H = mul(S, H); plane?.reset(); steadier.reset();
+    return true;
   }
   function clearHud(){ hctx.setTransform(1,0,0,1,0,0); hctx.clearRect(0,0,hud.width,hud.height); }
   function drawHud(){
@@ -2667,9 +2865,27 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
     if(anchor) adjustAnchor([-1,0,view.width, 0,1,0, 0,0,1]); else applyTransform(); saveProjectSoon(); };
   $('#rotBtn').onclick = () => { if(anchor) adjustAnchor(aboutPoint(imgCenter(),1,Math.PI/2)); else { st.rot=Math.round((st.rot+90)/90)*90; applyTransform(); } };
   $('#fitBtn').onclick = () => { closeMenu(); restart(); fit(); };
-  $('#flipBtn').onclick = () => { closeMenu(); facing = facing==='environment' ? 'user' : 'environment'; stopCamera(); startCamera(); };
+  // Cameras by name. iPhone also offers combined cameras ("Dual", "Triple") that switch lenses by
+  // themselves when you get close; the picture then jumps off the paper, so a single lens is preferred.
+  let camId = null;
+  const COMBINED=/dual|triple|kahe|kolme|topelt|kolmik|doppel|dreifach|double|triple/i, FRONT=/front|esi|ees|vorder|avant/i, ULTRA=/ultra|ülilai|lainurk/i, TELE=/tele/i;
+  async function listCameras(autoPick){
+    let devs=[]; try{ devs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput'); }catch(_){}
+    const cur = stream?.getVideoTracks?.()[0], curId = cur?.getSettings?.().deviceId, curLabel = cur?.label || '';
+    if(autoPick && !store.get('camId') && COMBINED.test(curLabel)){
+      const single = devs.find(d => d.label && !COMBINED.test(d.label) && !FRONT.test(d.label) && !ULTRA.test(d.label) && !TELE.test(d.label));
+      if(single && single.deviceId && single.deviceId!==curId){ camId=single.deviceId; stopCamera(); startCamera(); return; }
+    }
+    const box=$('#camList'); box.textContent='';
+    devs.filter(d=>d.label).forEach(d => {
+      const b=document.createElement('button'); b.className='btn'; b.textContent=d.label;
+      b.setAttribute('aria-pressed', d.deviceId===curId);
+      b.onclick=()=>{ camId=d.deviceId; store.set('camId', d.deviceId); closeMenu(); stopCamera(); startCamera(); };
+      box.appendChild(b); });
+    $('#camBox').hidden = !box.childElementCount || st.mode!=='camera';
+  }
 
-  function openMenu(){ $('#menu').hidden=false; }
+  function openMenu(){ $('#menu').hidden=false; if(stream) listCameras(false); else $('#camBox').hidden=true; }
   function closeMenu(){ $('#menu').hidden=true; }
   $('#moreBtn').onclick = openMenu; $('#menuClose').onclick = closeMenu;
   $('#menu').addEventListener('click', e => { if(e.target.id==='menu') closeMenu(); });
