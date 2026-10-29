@@ -1886,7 +1886,7 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
     }
     // Region growing: spread from a light spot while brightness changes only gradually.
     // Uneven light across the sheet changes slowly; the sheet's edge is a sudden drop.
-    let sm=null, tmp=null, lab=null, qbuf=null;
+    let sm=null, tmp=null, lab=null, qbuf=null, mk=null, mk2=null, integ=null;
     function grow(seed, gw, gh, id){
       const L0=sm[seed], floor=.55*L0; let head=0, tail=0, n=0;
       lab[seed]=id; qbuf[tail++]=seed;
@@ -1929,6 +1929,34 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
         const cos=(v1[0]*v2[0]+v1[1]*v2[1])/(l1*l2); if(Math.abs(cos)>.6) return null; }   // corners between ~53° and ~127°
       return out;
     }
+    // Cut a grown region loose from leaks: shrink it so that narrow bridges (tape, halos) break,
+    // keep the largest piece, then grow that piece back, but only within the original region.
+    function boxCount(src, gw, gh, r, out, test){
+      const W1=gw+1;
+      for(let y=0;y<gh;y++){ let row=0; for(let x=0;x<gw;x++){ row+=src[y*gw+x]; integ[(y+1)*W1+x+1]=integ[y*W1+x+1]+row; } }
+      for(let y=0;y<gh;y++){ const y0=Math.max(0,y-r), y1=Math.min(gh,y+r+1);
+        for(let x=0;x<gw;x++){ const x0=Math.max(0,x-r), x1=Math.min(gw,x+r+1);
+          const n=integ[y1*W1+x1]-integ[y0*W1+x1]-integ[y1*W1+x0]+integ[y0*W1+x0];
+          out[y*gw+x]=test(n, (y1-y0)*(x1-x0)); } }
+    }
+    function cleanRegion(id, gw, gh){
+      const N=gw*gh, r=Math.max(3, Math.round(gw/70));
+      for(let i=0;i<N;i++) mk[i]=lab[i]===id?1:0;
+      boxCount(mk, gw, gh, r, mk2, (n,full)=>n===(2*r+1)*(2*r+1)?1:0);       // shrink
+      // largest connected piece of what is left
+      let best=0, bestN=0, cur=1; const comp=qbuf;
+      for(let i=0;i<N;i++){ if(mk2[i]!==1) continue;
+        cur++; if(cur>250) break; let head=0, tail=0, n=0; comp[tail++]=i; mk2[i]=cur;
+        while(head<tail){ const p=comp[head++], x=p%gw; n++;
+          if(x>0&&mk2[p-1]===1){ mk2[p-1]=cur; comp[tail++]=p-1; } if(x<gw-1&&mk2[p+1]===1){ mk2[p+1]=cur; comp[tail++]=p+1; }
+          if(p>=gw&&mk2[p-gw]===1){ mk2[p-gw]=cur; comp[tail++]=p-gw; } if(p<N-gw&&mk2[p+gw]===1){ mk2[p+gw]=cur; comp[tail++]=p+gw; } }
+        if(n>bestN){ bestN=n; best=cur; } }
+      if(!bestN) return 0;
+      for(let i=0;i<N;i++) mk2[i]=mk2[i]===best?1:0;
+      boxCount(mk2, gw, gh, r, bin.data, (n)=>n>0?255:0);                    // grow back...
+      let kept=0; for(let i=0;i<N;i++){ if(bin.data[i] && !mk[i]) bin.data[i]=0; else if(bin.data[i]) kept++; }   // ...within the region
+      return kept;
+    }
     function quadFromBinary(gw, gh){
       let best=null, bestA=0;
       for(const c of CV.findContours(bin, buf)){
@@ -1941,11 +1969,52 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
       }
       return best;
     }
+    // The paper ends at the first lasting drop in brightness when moving outward from inside it.
+    // A side that sits further out (on the board, a ledge or a clip) is pulled in to that place.
+    function toPaper(q, d, w, h){
+      const cx=(q[0][0]+q[1][0]+q[2][0]+q[3][0])/4, cy=(q[0][1]+q[1][1]+q[2][1]+q[3][1])/4, lines=[];
+      let moved=false;
+      for(let i=0;i<4;i++){
+        const a=q[i], b=q[(i+1)%4], dx=b[0]-a[0], dy=b[1]-a[1], len=Math.hypot(dx,dy);
+        let nx=-dy/len, ny=dx/len;
+        if((cx-(a[0]+b[0])/2)*nx+(cy-(a[1]+b[1])/2)*ny<0){ nx=-nx; ny=-ny; }        // inward
+        const depth=Math.max(20, ((cx-(a[0]+b[0])/2)*nx+(cy-(a[1]+b[1])/2)*ny));     // side to middle
+        const dRef=.6*depth, run=Math.max(8, .06*depth|0), M=40, pts=[], ratios=[];
+        const v=(px,py)=> (px<1||py<1||px>=w-2||py>=h-2) ? -1 : lum(d,w,px,py);
+        for(let s2=0;s2<=M;s2++){
+          const t=.1+.8*s2/M, px=a[0]+dx*t, py=a[1]+dy*t;
+          let R=0, c=0; for(let e=-2;e<=2;e++){ const u=v(px+nx*dRef+dx/len*e*2, py+ny*dRef+dy/len*e*2); if(u>=0){ R+=u; c++; } }
+          if(!c) continue; R/=c;
+          const near=v(px+nx*4, py+ny*4); if(near>=0) ratios.push(near/Math.max(1,R));
+          const prof=[]; for(let k=Math.ceil(dRef); k>=-8; k--) prof.push([k, v(px+nx*k, py+ny*k)]);
+          for(let j=6;j<prof.length-run-1;j++){
+            const [k, u]=prof[j]; if(u<0) break;
+            const pin=(prof[j-2][1]+prof[j-3][1]+prof[j-4][1]+prof[j-5][1])/4;
+            if(pin<.7*R || u>=.85*pin) continue;
+            let lasting=true; for(let r=1;r<=run;r++){ const ur=prof[j+r][1]; if(ur<0 || ur>=.88*pin){ lasting=false; break; } }
+            if(lasting){ pts.push([px+nx*(k+1.5), py+ny*(k+1.5), k+1.5]); break; }
+          }
+        }
+        let ln=null;
+        const nearMed=ratios.length ? ratios.sort((x,y)=>x-y)[ratios.length>>1] : 1;
+        if(pts.length>=.45*M && Math.abs(nearMed-1)>.12){                           // just inside this side is not paper
+          const sh=pts.map(p=>p[2]).sort((x,y)=>x-y)[pts.length>>1];
+          if(sh>3){ const f=fitLine(pts.map(p=>[p[0],p[1]])); if(f){ const ang=Math.abs(f.ux*dy/len - f.uy*dx/len); if(ang<.12){ ln=f; moved=true; } } }
+        }
+        lines.push(ln || { mx:a[0], my:a[1], ux:dx/len, uy:dy/len });
+      }
+      if(!moved) return q;
+      const out=[]; for(let i=0;i<4;i++){ const m=meet(lines[(i+3)%4], lines[i]); if(!m) return q; out.push(m); }
+      const a0=Math.abs(area(q)), a1=Math.abs(area(out));
+      if(!(a1>.4*a0 && a1<a0)) return q;
+      return out;
+    }
     function find(d,w,h){
       const k=Math.max(1, Math.round(w/320)), gw=(w/k)|0, gh=(h/k)|0, N=gw*gh;
       if(!gray || gray.width!==gw || gray.height!==gh){
         gray=new CV.Image(gw,gh,new Uint8ClampedArray(N)); bin=new CV.Image(gw,gh,new Uint8ClampedArray(N)); buf=new Array((gw+2)*(gh+2));
-        sm=new Float32Array(N); tmp=new Float32Array(N); lab=new Uint8Array(N); qbuf=new Int32Array(N); }
+        sm=new Float32Array(N); tmp=new Float32Array(N); lab=new Uint8Array(N); qbuf=new Int32Array(N);
+        mk=new Uint8Array(N); mk2=new Uint8Array(N); integ=new Int32Array((gw+1)*(gh+1)); }
       const g=gray.data, inv=1/(k*k), row=w*4;
       for(let y=0;y<gh;y++){ const y0=y*k*row;
         for(let x=0;x<gw;x++){ let s=0;
@@ -1965,20 +2034,29 @@ var jsfeat=jsfeat||{REVISION:"ALPHA"};(function(r){var o=1.192092896e-7;var l=1e
         let bi=-1, bv=-1; for(let y=cy;y<Math.min(gh,cy+CH);y+=2) for(let x=cx;x<Math.min(gw,cx+CW);x+=2){ const v=sm[y*gw+x]; if(v>bv){ bv=v; bi=y*gw+x; } }
         if(bi>=0) cells.push([bv,bi]); }
       cells.sort((a,b)=>b[0]-a[0]);
-      let id=0;
-      for(const [,seed] of cells){
-        if(id>=6) break;
+      // the brightest spots first (as before), then the middle of the view, for when the paper is not the
+      // brightest thing in sight; a middle seed moves to the lightest point near it, off any drawn line
+      const seeds=cells.slice(0,30).map(c=>c[1]);
+      for(const [fx,fy] of [[.5,.5],[.5,.38],[.5,.62],[.38,.5],[.62,.5]]){
+        const x0=(fx*gw)|0, y0=(fy*gh)|0; let bi=y0*gw+x0, bv=-1;
+        for(let y=Math.max(0,y0-10);y<=Math.min(gh-1,y0+10);y++) for(let x=Math.max(0,x0-10);x<=Math.min(gw-1,x0+10);x++){ const v2=sm[y*gw+x]; if(v2>bv){ bv=v2; bi=y*gw+x; } }
+        seeds.push(bi); }
+      let id=0, grown=0;
+      for(const seed of seeds){
+        if(id>=250) break;
         if(lab[seed]) continue;
         const n=grow(seed, gw, gh, ++id);
         if(n<.06*N) continue;
-        const bd=bin.data; for(let i=0;i<N;i++) bd[i]=lab[i]===id?255:0;
+        if(++grown>8) break;
+        if(cleanRegion(id, gw, gh) < .05*N) continue;
         const q=quadFromBinary(gw, gh); if(q) candidates.push({ q, grown:true });
       }
       let pick=null, pickScore=-1e9;
       const judge=cand=>{
         const coarse=order(cand.q.map(p=>[p[0]*k+(k-1)/2, p[1]*k+(k-1)/2]));
         // two passes: a wide search finds each edge, a narrow one settles it precisely
-        const wide=follow(d,w,h,coarse,Math.max(10,5*k),true);
+        let wide=follow(d,w,h,coarse,Math.max(10,5*k),true);
+        if(wide){ const tp=toPaper(wide,d,w,h); if(tp!==wide) wide=follow(d,w,h,tp,Math.max(5,2*k+2),true) || tp; }
         const fine=(wide && follow(d,w,h,wide,Math.max(5,2*k+2),true)) || wide;
         if(!fine || !fine.stats) return;
         if(fine.some(p=>p[0]<2||p[1]<2||p[0]>w-3||p[1]>h-3)) return;
